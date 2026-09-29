@@ -25,7 +25,7 @@ static void report(const char* name, Walrus& s) {
   printf("header: %s\n", s.getHeader().c_str());
   printf("string: %s\n", s.getString().c_str());
   printf("getters: pressure=%.4f tExt=%.4f tMS5803=%.4f default=%.4f newData=%d\n",
-         s.getPressure(), s.getTemperature(0), s.getTemperature(1), s.getTemperature(), s.newData());
+         s.getPressure(), s.getTemperature(), s.getMS5803Temperature(), s.getTemperature(), s.newData());
 }
 
 int main() {
@@ -96,12 +96,12 @@ int main() {
            ok, s.getPressureCount(), s.getTemperatureCount(), lastRequest, Wire.transactions - t0);
     printf("[N=5,3] pressure mean=%.4f std=%.4f sterr=%.4f median=%.4f | tExt mean=%.4f std=%.4f median=%.4f | tMS5803 mean=%.4f std=%.4f\n",
            s.getPressureMean(), s.getPressureStd(), s.getPressureSterr(), s.getPressureMedian(),
-           s.getTemperatureMean(0), s.getTemperatureStd(0), s.getTemperatureMedian(0), s.getTemperatureMean(1), s.getTemperatureStd(1));
+           s.getTemperatureMean(), s.getTemperatureStd(), s.getTemperatureMedian(), s.getMS5803TemperatureMean(), s.getMS5803TemperatureStd());
     printf("[N=5,3] header: %s\n", s.getHeader().c_str());
     printf("[N=5,3] string: %s\n", s.getString().c_str());
     // One chip group only: the MCP9808 readings are left untouched by an MS5803 update.
     ok = s.updateMeasurements(Walrus::MS5803);
-    printf("[MS5803 only] update=%d pressureCount=%u temperatureCount=%u tExt=%.4f\n", ok, s.getPressureCount(), s.getTemperatureCount(), s.getTemperature(0));
+    printf("[MS5803 only] update=%d pressureCount=%u temperatureCount=%u tExt=%.4f\n", ok, s.getPressureCount(), s.getTemperatureCount(), s.getTemperature());
     onReading = nullptr; }
 
   // 9. Reading interface: header, three logged readings of ALL, then MCP9808 alone; the

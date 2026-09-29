@@ -117,15 +117,21 @@ class Walrus : public NW_Sensor
          * dedicated MCP9808 sensor. Values are those stored by the last
          * updateMeasurements() (NW_ERROR before the first).
          *
-         * @param Location
-         * 0: Read dedicated temperature sensor.
-         * 1: Read temperature sensor within the MS5803.
-         */
-        float getTemperature(uint8_t Location);
-        /**
-         * @brief Return the MS5803 temperature (getTemperature(1)).
+         * This is the MCP9808, exposed to whatever the unit is installed in:
+         * the measurement, which is why it is the unqualified name. It is also
+         * what setTemperatureReadings(), setTemperatureStats() and
+         * getTemperatureCount() have always meant.
          */
         float getTemperature();
+        /**
+         * @brief The MS5803's own die temperature [C].
+         * @details A diagnostic, not a measurement of the medium: it is what
+         * compensates the pressure, and it reads the inside of the pressure
+         * sensor. Named for the part because only the part tells the Walrus's
+         * two thermometers apart, which is the chip-naming rule in
+         * NW-Device-Specification.
+         */
+        float getMS5803Temperature();
         /**
          * @brief Return calculated pressure from sensor [mBar].
          * @details This is the MS5803 sensor, which can come in a variety
@@ -147,14 +153,22 @@ class Walrus : public NW_Sensor
         float getPressureSterr();
         /** @brief Pressure median [mBar] (mean of the middle pair for even N). */
         float getPressureMedian();
-        /** @brief Temperature mean [C] over the stored readings; Location 0 = MCP9808, 1 = MS5803. */
-        float getTemperatureMean(uint8_t Location);
-        /** @brief Temperature standard deviation [C]; Location as getTemperature(). */
-        float getTemperatureStd(uint8_t Location);
-        /** @brief Temperature standard error [C]; Location as getTemperature(). */
-        float getTemperatureSterr(uint8_t Location);
-        /** @brief Temperature median [C]; Location as getTemperature(). */
-        float getTemperatureMedian(uint8_t Location);
+        /** @brief Medium temperature mean [C] over the stored readings (NW_ERROR when none). */
+        float getTemperatureMean();
+        /** @brief Medium temperature standard deviation [C]. */
+        float getTemperatureStd();
+        /** @brief Medium temperature standard error [C]. */
+        float getTemperatureSterr();
+        /** @brief Medium temperature median [C]. */
+        float getTemperatureMedian();
+        /** @brief MS5803 die temperature mean [C]. */
+        float getMS5803TemperatureMean();
+        /** @brief MS5803 die temperature standard deviation [C]. */
+        float getMS5803TemperatureStd();
+        /** @brief MS5803 die temperature standard error [C]. */
+        float getMS5803TemperatureSterr();
+        /** @brief MS5803 die temperature median [C]. */
+        float getMS5803TemperatureMedian();
         /**
          * @brief Return header
          * @details "Pressure [mBar],Temp DH [C],Temp DHt [C]," with std and
@@ -164,8 +178,8 @@ class Walrus : public NW_Sensor
         String getHeader();
         /**
          * @brief Take a reading (updateMeasurements()) and return it as a string
-         * @details String(getPressure()) + "," + String(getTemperature(0))
-         + "," + String(getTemperature(1)) + ","; statistics columns as
+         * @details String(getPressure()) + "," + String(getTemperature())
+         + "," + String(getMS5803Temperature()) + ","; statistics columns as
          * getHeader() describes.
          */
         String getString();

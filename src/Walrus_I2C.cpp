@@ -105,20 +105,17 @@ float Walrus::getPressureMean()   { return nwScaled(_pressureReadings.mean(),   
 float Walrus::getPressureStd()    { return nwScaled(_pressureReadings.std(),    1000.0); }
 float Walrus::getPressureSterr()  { return nwScaled(_pressureReadings.sterr(),  1000.0); }
 float Walrus::getPressureMedian() { return nwScaled(_pressureReadings.median(), 1000.0); }
-float Walrus::getTemperatureMean(uint8_t Location)   { return nwScaled(Location == 0 ? _tempExtReadings.mean()   : _tempMS5803Readings.mean(),   100.0); }
-float Walrus::getTemperatureStd(uint8_t Location)    { return nwScaled(Location == 0 ? _tempExtReadings.std()    : _tempMS5803Readings.std(),    100.0); }
-float Walrus::getTemperatureSterr(uint8_t Location)  { return nwScaled(Location == 0 ? _tempExtReadings.sterr()  : _tempMS5803Readings.sterr(),  100.0); }
-float Walrus::getTemperatureMedian(uint8_t Location) { return nwScaled(Location == 0 ? _tempExtReadings.median() : _tempMS5803Readings.median(), 100.0); }
+float Walrus::getTemperatureMean()   { return nwScaled(_tempExtReadings.mean(),   100.0); }
+float Walrus::getTemperatureStd()    { return nwScaled(_tempExtReadings.std(),    100.0); }
+float Walrus::getTemperatureSterr()  { return nwScaled(_tempExtReadings.sterr(),  100.0); }
+float Walrus::getTemperatureMedian() { return nwScaled(_tempExtReadings.median(), 100.0); }
+float Walrus::getMS5803TemperatureMean()   { return nwScaled(_tempMS5803Readings.mean(),   100.0); }
+float Walrus::getMS5803TemperatureStd()    { return nwScaled(_tempMS5803Readings.std(),    100.0); }
+float Walrus::getMS5803TemperatureSterr()  { return nwScaled(_tempMS5803Readings.sterr(),  100.0); }
+float Walrus::getMS5803TemperatureMedian() { return nwScaled(_tempMS5803Readings.median(), 100.0); }
 
-float Walrus::getTemperature(uint8_t Location) //Returns temp in C from either subsensor
-{
-    return (Location == 0) ? _tempExt : _tempMS5803;
-}
-
-float Walrus::getTemperature() //By default get thermistor temp value
-{
-    return getTemperature(1);
-}
+float Walrus::getTemperature()       { return _tempExt; }      //the medium: the measurement
+float Walrus::getMS5803Temperature() { return _tempMS5803; }   //the die: what compensates the pressure
 
 float Walrus::getPressure()
 {
@@ -182,10 +179,10 @@ String Walrus::getString()
     updateMeasurements();                           //NW_ERROR (-9999) where a reading failed
     String s = String(getPressure()) + ",";
     if(_pressureCfg.columns()) s += String(getPressureStd()) + "," + String(getPressureSterr()) + ",";
-    s += String(getTemperature(0)) + ",";
-    if(_temperatureCfg.columns()) s += String(getTemperatureStd(0)) + "," + String(getTemperatureSterr(0)) + ",";
-    s += String(getTemperature(1)) + ",";
-    if(_pressureCfg.columns()) s += String(getTemperatureStd(1)) + "," + String(getTemperatureSterr(1)) + ",";
+    s += String(getTemperature()) + ",";
+    if(_temperatureCfg.columns()) s += String(getTemperatureStd()) + "," + String(getTemperatureSterr()) + ",";
+    s += String(getMS5803Temperature()) + ",";
+    if(_pressureCfg.columns()) s += String(getMS5803TemperatureStd()) + "," + String(getMS5803TemperatureSterr()) + ",";
     return s;
 }
 

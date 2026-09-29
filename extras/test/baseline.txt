@@ -1,11 +1,11 @@
 [complete reading]
 header: Pressure [mBar],Temp DH [C],Temp DHt [C],
 string: 1013.25,4.05,21.37,
-getters: pressure=1013.2500 tExt=4.0500 tMS5803=21.3700 default=21.3700 newData=1
+getters: pressure=1013.2500 tExt=4.0500 tMS5803=21.3700 default=4.0500 newData=1
 [negative temperatures]
 header: Pressure [mBar],Temp DH [C],Temp DHt [C],
 string: 1250.00,-0.50,-12.34,
-getters: pressure=1250.0000 tExt=-0.5000 tMS5803=-12.3400 default=-12.3400 newData=1
+getters: pressure=1250.0000 tExt=-0.5000 tMS5803=-12.3400 default=-0.5000 newData=1
 [device absent]
 header: Pressure [mBar],Temp DH [C],Temp DHt [C],
 string: -9999.00,-9999.00,-9999.00,
