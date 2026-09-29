@@ -29,10 +29,11 @@ bool Walrus::updateMeasurements(uint8_t component)
     if(doMS) { _pressureReadings.reset(); _tempMS5803Readings.reset(); }
     if(doMCP) _tempExtReadings.reset();
     if(doMS && doMCP && _pressureCfg.n <= 1 && _temperatureCfg.n <= 1) {
-        //One reading of everything: both chips in one trigger, one 10-byte read.
+        //One reading of everything: both chips in one trigger, one 24-byte read
+        //covering Blocks 1 to 3, so nothing can straddle a rewrite.
         _dev.resetBatch();
-        uint8_t d[10];
-        if(_dev.takeReading(ALL) && _dev.readData(NW_REG_DATA, d, 10)) {
+        uint8_t d[WALRUS_DATA_BYTES];
+        if(_dev.takeReading(ALL) && _dev.readData(NW_REG_DATA, d, WALRUS_DATA_BYTES)) {
             readMS5803(d);
             readMCP9808(d + 8);
         }
@@ -52,8 +53,10 @@ bool Walrus::updateMeasurements(uint8_t component)
 
 bool Walrus::updatePressure()
 {
-    uint8_t d[6];
-    if(!_dev.takeReading(MS5803) || !_dev.readData(PRES_REG, d, 6)) return false;
+    //Blocks 1 to 3 in one transaction: the device rewrites its data atomically,
+    //so a single read cannot straddle a reading, where two reads could.
+    uint8_t d[WALRUS_DATA_BYTES];
+    if(!_dev.takeReading(MS5803) || !_dev.readData(PRES_REG, d, WALRUS_DATA_BYTES)) return false;
     return readMS5803(d);
 }
 
@@ -64,12 +67,15 @@ bool Walrus::updateTemperature()
     return readMCP9808(d);
 }
 
-bool Walrus::readMS5803(uint8_t* d)
+bool Walrus::readMS5803(const uint8_t (&d)[WALRUS_DATA_BYTES])
 {
     if(_dev.faulted(0)) return false;           //MS5803: pressure int32 uBar, temperature int16 0.01 C
     int32_t p = (int32_t)((uint32_t)d[0] | ((uint32_t)d[1] << 8) | ((uint32_t)d[2] << 16) | ((uint32_t)d[3] << 24));
     _pressureReadings.append(p);
     _tempMS5803Readings.append((int16_t)(d[4] | (d[5] << 8)));
+    //Block 3 at 0x58 is 16 bytes past 0x48: the conversions the rest came from.
+    _pressureAdc    = (uint32_t)d[16] | ((uint32_t)d[17] << 8) | ((uint32_t)d[18] << 16) | ((uint32_t)d[19] << 24);
+    _temperatureAdc = (uint32_t)d[20] | ((uint32_t)d[21] << 8) | ((uint32_t)d[22] << 16) | ((uint32_t)d[23] << 24);
     return true;
 }
 
@@ -113,6 +119,10 @@ float Walrus::getMS5803TemperatureMean()   { return nwScaled(_tempMS5803Readings
 float Walrus::getMS5803TemperatureStd()    { return nwScaled(_tempMS5803Readings.std(),    100.0); }
 float Walrus::getMS5803TemperatureSterr()  { return nwScaled(_tempMS5803Readings.sterr(),  100.0); }
 float Walrus::getMS5803TemperatureMedian() { return nwScaled(_tempMS5803Readings.median(), 100.0); }
+
+uint32_t Walrus::getPressureADC()    { return _pressureAdc; }
+uint32_t Walrus::getTemperatureADC() { return _temperatureAdc; }
+void     Walrus::setADCColumns(bool enable) { _adcColumns = enable; }
 
 float Walrus::getTemperature()       { return _tempExt; }      //the medium: the measurement
 float Walrus::getMS5803Temperature() { return _tempMS5803; }   //the die: what compensates the pressure
@@ -171,6 +181,7 @@ String Walrus::getHeader()
     if(_temperatureCfg.columns()) h += "Temp DH std [C],Temp DH sterr [C],";
     h += "Temp DHt [C],";
     if(_pressureCfg.columns()) h += "Temp DHt std [C],Temp DHt sterr [C],";
+    if(_adcColumns) h += "MS5803 D1 [1],MS5803 D2 [1],";
     return h;
 }
 
@@ -183,6 +194,7 @@ String Walrus::getString()
     if(_temperatureCfg.columns()) s += String(getTemperatureStd()) + "," + String(getTemperatureSterr()) + ",";
     s += String(getMS5803Temperature()) + ",";
     if(_pressureCfg.columns()) s += String(getMS5803TemperatureStd()) + "," + String(getMS5803TemperatureSterr()) + ",";
+    if(_adcColumns) s += String(getPressureADC()) + "," + String(getTemperatureADC()) + ",";
     return s;
 }
 

@@ -16,9 +16,10 @@ Distributed as-is; no warranty is given.
 #include <Arduino.h>
 #include <NW_Core.h>   // NW_Core: NW_Device (Schema 1 protocol), NW_Report
 
-/// Lowest firmware patch (Page 0 byte 0x0A) this library accepts: patch 1
+/// Lowest firmware patch (Page 0 byte 0x0A) this library accepts: patch 2,
+/// the first to serve the MS5803's own conversions in Page 2 Block 3.
 /// brought the Block 0 handshake (trigger, reading counter, faults).
-#define WALRUS_FW_MIN_PATCH 1
+#define WALRUS_FW_MIN_PATCH 2
 
 // Build identity: this library's version (held equal to library.properties by
 // NW-Tests/version_check.py) and its build commit, set by the NW-Build wrapper from
@@ -41,6 +42,9 @@ Distributed as-is; no warranty is given.
 #define PRES_REG    0x48  // Schema 1 Page 2 Block 1: pressure, int32, µBar
 #define TEMP_MS5803 0x4C  // Schema 1 Page 2 Block 1: MS5803 temperature, int16, 0.01 °C
 #define TEMP_EXT    0x50  // Schema 1 Page 2 Block 2: external temperature (MCP9808), int16, 0.01 °C
+#define ADC_REG     0x58  // Schema 1 Page 2 Block 3: MS5803 D1 and D2, uint32 each, ADC counts
+/// Bytes of Page 2 a reading spans: Block 1 through Block 3, 0x48 to 0x5F.
+#define WALRUS_DATA_BYTES 24
 
 /**
  * @class Walrus: .
@@ -139,6 +143,21 @@ class Walrus : public NW_Sensor
          * readings stored by the last updateMeasurements().
          */
         float getPressure();
+        /**
+         * @brief The MS5803's digital pressure value, D1, in its own counts.
+         * @details The conversion the compensated pressure was computed from,
+         * served whole on every reading. A reading can be checked after the
+         * fact with it, and a controller that knows the variant can compensate
+         * for itself. The last reading rather than a burst mean: counts carry
+         * no statistics, and the compensation is non-linear in D2, so a mean of
+         * the counts is not the counts of the mean. Zero before the first
+         * reading. Firmware patch 2 and above.
+         */
+        uint32_t getPressureADC();
+        /** @brief The MS5803's digital temperature value, D2, in its own counts; see getPressureADC(). */
+        uint32_t getTemperatureADC();
+        /** @brief Include the D1 and D2 columns in getString() and getHeader(). Off by default. */
+        void setADCColumns(bool enable);
 
         // --- Statistics getters ---
         // Computed two-pass in 32-bit float over the readings stored by the last
@@ -263,6 +282,9 @@ class Walrus : public NW_Sensor
         float _pressure = NW_ERROR;   //Mean of the last updateMeasurements() [mBar]
         float _tempExt = NW_ERROR;    //MCP9808 [C]
         float _tempMS5803 = NW_ERROR; //MS5803 [C]
+        uint32_t _pressureAdc = 0;    //MS5803 D1, counts, last reading
+        uint32_t _temperatureAdc = 0; //MS5803 D2, counts, last reading
+        bool _adcColumns = false;     //the counts are a diagnostic: off unless asked for
         // Readings as the device serves them (raw register units), one array per
         // field; statistics come from these and are scaled on the way out.
         NW_Readings<int32_t, WALRUS_PRESSURE_CAPACITY>    _pressureReadings;   //uBar
@@ -271,7 +293,11 @@ class Walrus : public NW_Sensor
         NW_ReadingsConfig _pressureCfg;    //Readings per updateMeasurements() and stats columns, MS5803 group
         NW_ReadingsConfig _temperatureCfg; //MCP9808 group
         uint8_t _component = ALL;     //Selection of the current beginReadings() run
-        bool readMS5803(uint8_t* d);  //Append one served MS5803 reading (6 bytes from 0x48) unless faulted
+        //Append one served MS5803 reading unless faulted. Takes a reference to
+        //an array of exactly WALRUS_DATA_BYTES, not a pointer: it reads Block 3
+        //at offset 16, and a caller that passed a shorter buffer once read past
+        //the end of it. The size is now the compiler's business.
+        bool readMS5803(const uint8_t (&d)[WALRUS_DATA_BYTES]);
         bool readMCP9808(uint8_t* d); //Append one served MCP9808 reading (2 bytes from 0x50) unless faulted
         void summarise(uint8_t component); //Means into the single-value fields, NW_ERROR when no reading
 };
