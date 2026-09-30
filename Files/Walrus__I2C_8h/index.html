@@ -225,7 +225,7 @@
           <aside class="sidebar__right sticky">
             <nav class="toc" aria-label="Table of contents">
               <header><h4 class="nav__title"><i class="fas fa-file-alt"></i> On this page</h4></header>
-              <ul class="toc__menu"><li><a href="#classes">Classes</a></li><li><a href="#defines">Defines</a></li><li><a href="#macros-documentation">Macros Documentation</a><ul><li><a href="#define-walrus_fw_min_patch">define WALRUS_FW_MIN_PATCH</a></li><li><a href="#define-walrus_library_version">define WALRUS_LIBRARY_VERSION</a></li><li><a href="#define-walrus_library_commit">define WALRUS_LIBRARY_COMMIT</a></li><li><a href="#define-walrus_pressure_capacity">define WALRUS_PRESSURE_CAPACITY</a></li><li><a href="#define-walrus_temperature_capacity">define WALRUS_TEMPERATURE_CAPACITY</a></li><li><a href="#define-pres_reg">define PRES_REG</a></li><li><a href="#define-temp_ms5803">define TEMP_MS5803</a></li><li><a href="#define-temp_ext">define TEMP_EXT</a></li><li><a href="#define-adr_default">define ADR_DEFAULT</a></li></ul></li><li><a href="#source-code">Source code</a></li></ul>
+              <ul class="toc__menu"><li><a href="#classes">Classes</a></li><li><a href="#defines">Defines</a></li><li><a href="#macros-documentation">Macros Documentation</a><ul><li><a href="#define-walrus_fw_min_patch">define WALRUS_FW_MIN_PATCH</a></li><li><a href="#define-walrus_library_version">define WALRUS_LIBRARY_VERSION</a></li><li><a href="#define-walrus_library_commit">define WALRUS_LIBRARY_COMMIT</a></li><li><a href="#define-walrus_pressure_capacity">define WALRUS_PRESSURE_CAPACITY</a></li><li><a href="#define-walrus_temperature_capacity">define WALRUS_TEMPERATURE_CAPACITY</a></li><li><a href="#define-pres_reg">define PRES_REG</a></li><li><a href="#define-temp_ms5803">define TEMP_MS5803</a></li><li><a href="#define-temp_ext">define TEMP_EXT</a></li><li><a href="#define-adc_reg">define ADC_REG</a></li><li><a href="#define-walrus_data_bytes">define WALRUS_DATA_BYTES</a></li><li><a href="#define-walrus_read_max">define WALRUS_READ_MAX</a></li><li><a href="#define-ms5803_model_reg">define MS5803_MODEL_REG</a></li><li><a href="#define-walrus_adc_not_read">define WALRUS_ADC_NOT_READ</a></li><li><a href="#define-adr_default">define ADR_DEFAULT</a></li></ul></li><li><a href="#source-code">Source code</a></li></ul>
             </nav>
           </aside>
         
@@ -290,6 +290,26 @@
     </tr>
     <tr>
       <td> </td>
+      <td><strong><a href="/Walrus_Library/Files/Walrus__I2C_8h/#define-adc-reg">ADC_REG</a></strong></td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td><strong><a href="/Walrus_Library/Files/Walrus__I2C_8h/#define-walrus-data-bytes">WALRUS_DATA_BYTES</a></strong> <br />Bytes of Page 2 a reading spans: Block 1 through Block 3, 0x48 to 0x5F.</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td><strong><a href="/Walrus_Library/Files/Walrus__I2C_8h/#define-walrus-read-max">WALRUS_READ_MAX</a></strong></td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td><strong><a href="/Walrus_Library/Files/Walrus__I2C_8h/#define-ms5803-model-reg">MS5803_MODEL_REG</a></strong></td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td><strong><a href="/Walrus_Library/Files/Walrus__I2C_8h/#define-walrus-adc-not-read">WALRUS_ADC_NOT_READ</a></strong></td>
+    </tr>
+    <tr>
+      <td> </td>
       <td><strong><a href="/Walrus_Library/Files/Walrus__I2C_8h/#define-adr-default">ADR_DEFAULT</a></strong></td>
     </tr>
   </tbody>
@@ -299,10 +319,10 @@
 
 <h3 id="define-walrus_fw_min_patch">define WALRUS_FW_MIN_PATCH</h3>
 
-<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define WALRUS_FW_MIN_PATCH 1
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define WALRUS_FW_MIN_PATCH 2
 </span></code></pre></div></div>
 
-<p>Lowest firmware patch (Page 0 byte 0x0A) this library accepts: patch 1 brought the Block 0 handshake (trigger, reading counter, faults).</p>
+<p>Lowest firmware patch (Page 0 byte 0x0A) this library accepts: patch 2, the first to serve the MS5803’s own conversions in Page 2 Block 3. brought the Block 0 handshake (trigger, reading counter, faults).</p>
 
 <h3 id="define-walrus_library_version">define WALRUS_LIBRARY_VERSION</h3>
 
@@ -339,6 +359,39 @@
 <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define TEMP_EXT 0x50
 </span></code></pre></div></div>
 
+<h3 id="define-adc_reg">define ADC_REG</h3>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define ADC_REG 0x58
+</span></code></pre></div></div>
+
+<h3 id="define-walrus_data_bytes">define WALRUS_DATA_BYTES</h3>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define WALRUS_DATA_BYTES 24
+</span></code></pre></div></div>
+
+<p>Bytes of Page 2 a reading spans: Block 1 through Block 3, 0x48 to 0x5F.</p>
+
+<h3 id="define-walrus_read_max">define WALRUS_READ_MAX</h3>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define WALRUS_READ_MAX 16
+</span></code></pre></div></div>
+
+<p>Most the <a href="/Walrus_Library/Classes/classWalrus/">Walrus</a> can clock out in one read. Its USI peripheral has a 16-byte transmit buffer (ATTinyCore USI_TWI_Slave.h, TWI_TX_BUFFER_SIZE), so a longer request is answered with 0xFF past the sixteenth byte and a reading must be fetched in two transactions.</p>
+
+<h3 id="define-ms5803_model_reg">define MS5803_MODEL_REG</h3>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define MS5803_MODEL_REG 0x20
+</span></code></pre></div></div>
+
+<p>Page 1, first byte: the bar figure of the MS5803 that is fitted, as NW-Provision wrote it. 0xFF is unprovisioned.</p>
+
+<h3 id="define-walrus_adc_not_read">define WALRUS_ADC_NOT_READ</h3>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define WALRUS_ADC_NOT_READ 0xFFFFFFFFUL
+</span></code></pre></div></div>
+
+<p>What the raw getters read when no reading was taken. A real conversion is 24 bits, so all-ones cannot be mistaken for one, and it is what a failed bus read yields anyway.</p>
+
 <h3 id="define-adr_default">define ADR_DEFAULT</h3>
 
 <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define ADR_DEFAULT Walrus::DEFAULT_ADDRESS
@@ -368,7 +421,7 @@ Distributed as-is; no warranty is given.
 <span class="cp">#include</span> <span class="cpf">&lt;Arduino.h&gt;</span><span class="cp">
 #include</span> <span class="cpf">&lt;NW_Core.h&gt;</span><span class="c1">   // NW_Core: NW_Device (Schema 1 protocol), NW_Report</span><span class="cp">
 </span>
-<span class="cp">#define WALRUS_FW_MIN_PATCH 1
+<span class="cp">#define WALRUS_FW_MIN_PATCH 2
 </span>
 <span class="c1">// Build identity: this library's version (held equal to library.properties by</span>
 <span class="c1">// NW-Tests/version_check.py) and its build commit, set by the NW-Build wrapper from</span>
@@ -391,6 +444,11 @@ Distributed as-is; no warranty is given.
 <span class="cp">#define PRES_REG    0x48  // Schema 1 Page 2 Block 1: pressure, int32, µBar
 #define TEMP_MS5803 0x4C  // Schema 1 Page 2 Block 1: MS5803 temperature, int16, 0.01 °C
 #define TEMP_EXT    0x50  // Schema 1 Page 2 Block 2: external temperature (MCP9808), int16, 0.01 °C
+#define ADC_REG     0x58  // Schema 1 Page 2 Block 3: MS5803 D1 and D2, uint32 each, ADC counts
+#define WALRUS_DATA_BYTES 24
+#define WALRUS_READ_MAX 16
+#define MS5803_MODEL_REG 0x20
+#define WALRUS_ADC_NOT_READ 0xFFFFFFFFUL
 </span>
 <span class="k">class</span> <span class="nc">Walrus</span> <span class="o">:</span> <span class="k">public</span> <span class="n">NW_Sensor</span>
 <span class="p">{</span>
@@ -412,9 +470,14 @@ Distributed as-is; no warranty is given.
         <span class="kt">void</span> <span class="nf">setTemperatureStats</span><span class="p">(</span><span class="kt">bool</span> <span class="n">enable</span><span class="p">);</span>
         <span class="kt">uint16_t</span> <span class="nf">getPressureCount</span><span class="p">();</span>
         <span class="kt">uint16_t</span> <span class="nf">getTemperatureCount</span><span class="p">();</span>
-        <span class="kt">float</span> <span class="nf">getTemperature</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">Location</span><span class="p">);</span>
         <span class="kt">float</span> <span class="nf">getTemperature</span><span class="p">();</span>
+        <span class="kt">float</span> <span class="nf">getMS5803Temperature</span><span class="p">();</span>
         <span class="kt">float</span> <span class="nf">getPressure</span><span class="p">();</span>
+        <span class="kt">uint32_t</span> <span class="nf">getPressureADC</span><span class="p">();</span>
+        <span class="kt">uint32_t</span> <span class="nf">getTemperatureADC</span><span class="p">();</span>
+        <span class="kt">void</span> <span class="nf">setADCColumns</span><span class="p">(</span><span class="kt">bool</span> <span class="n">enable</span><span class="p">);</span>
+        <span class="kt">uint8_t</span> <span class="nf">getMS5803Model</span><span class="p">();</span>
+        <span class="kt">bool</span> <span class="nf">modelKnown</span><span class="p">();</span>
 
         <span class="c1">// --- Statistics getters ---</span>
         <span class="c1">// Computed two-pass in 32-bit float over the readings stored by the last</span>
@@ -425,10 +488,14 @@ Distributed as-is; no warranty is given.
         <span class="kt">float</span> <span class="nf">getPressureStd</span><span class="p">();</span>
         <span class="kt">float</span> <span class="nf">getPressureSterr</span><span class="p">();</span>
         <span class="kt">float</span> <span class="nf">getPressureMedian</span><span class="p">();</span>
-        <span class="kt">float</span> <span class="nf">getTemperatureMean</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">Location</span><span class="p">);</span>
-        <span class="kt">float</span> <span class="nf">getTemperatureStd</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">Location</span><span class="p">);</span>
-        <span class="kt">float</span> <span class="nf">getTemperatureSterr</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">Location</span><span class="p">);</span>
-        <span class="kt">float</span> <span class="nf">getTemperatureMedian</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">Location</span><span class="p">);</span>
+        <span class="kt">float</span> <span class="nf">getTemperatureMean</span><span class="p">();</span>
+        <span class="kt">float</span> <span class="nf">getTemperatureStd</span><span class="p">();</span>
+        <span class="kt">float</span> <span class="nf">getTemperatureSterr</span><span class="p">();</span>
+        <span class="kt">float</span> <span class="nf">getTemperatureMedian</span><span class="p">();</span>
+        <span class="kt">float</span> <span class="nf">getMS5803TemperatureMean</span><span class="p">();</span>
+        <span class="kt">float</span> <span class="nf">getMS5803TemperatureStd</span><span class="p">();</span>
+        <span class="kt">float</span> <span class="nf">getMS5803TemperatureSterr</span><span class="p">();</span>
+        <span class="kt">float</span> <span class="nf">getMS5803TemperatureMedian</span><span class="p">();</span>
         <span class="n">String</span> <span class="nf">getHeader</span><span class="p">();</span>
         <span class="n">String</span> <span class="nf">getString</span><span class="p">();</span>
 
@@ -467,6 +534,11 @@ Distributed as-is; no warranty is given.
         <span class="kt">float</span> <span class="n">_pressure</span> <span class="o">=</span> <span class="n">NW_ERROR</span><span class="p">;</span>   <span class="c1">//Mean of the last updateMeasurements() [mBar]</span>
         <span class="kt">float</span> <span class="n">_tempExt</span> <span class="o">=</span> <span class="n">NW_ERROR</span><span class="p">;</span>    <span class="c1">//MCP9808 [C]</span>
         <span class="kt">float</span> <span class="n">_tempMS5803</span> <span class="o">=</span> <span class="n">NW_ERROR</span><span class="p">;</span> <span class="c1">//MS5803 [C]</span>
+        <span class="kt">uint32_t</span> <span class="n">_pressureAdc</span> <span class="o">=</span> <span class="n">WALRUS_ADC_NOT_READ</span><span class="p">;</span>    <span class="c1">//MS5803 D1, counts, last reading</span>
+        <span class="kt">uint32_t</span> <span class="n">_temperatureAdc</span> <span class="o">=</span> <span class="n">WALRUS_ADC_NOT_READ</span><span class="p">;</span> <span class="c1">//MS5803 D2, counts, last reading</span>
+        <span class="kt">bool</span> <span class="n">_adcColumns</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>     <span class="c1">//the counts are a diagnostic: off unless asked for</span>
+        <span class="kt">uint8_t</span> <span class="n">_model</span> <span class="o">=</span> <span class="mh">0xFF</span><span class="p">;</span>        <span class="c1">//Page 1's MS5803 model, read by begin()</span>
+        <span class="kt">bool</span> <span class="n">_modelRead</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>      <span class="c1">//whether begin() got to ask</span>
         <span class="c1">// Readings as the device serves them (raw register units), one array per</span>
         <span class="c1">// field; statistics come from these and are scaled on the way out.</span>
         <span class="n">NW_Readings</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="p">,</span> <span class="n">WALRUS_PRESSURE_CAPACITY</span><span class="o">&gt;</span>    <span class="n">_pressureReadings</span><span class="p">;</span>   <span class="c1">//uBar</span>
@@ -475,7 +547,15 @@ Distributed as-is; no warranty is given.
         <span class="n">NW_ReadingsConfig</span> <span class="n">_pressureCfg</span><span class="p">;</span>    <span class="c1">//Readings per updateMeasurements() and stats columns, MS5803 group</span>
         <span class="n">NW_ReadingsConfig</span> <span class="n">_temperatureCfg</span><span class="p">;</span> <span class="c1">//MCP9808 group</span>
         <span class="kt">uint8_t</span> <span class="n">_component</span> <span class="o">=</span> <span class="n">ALL</span><span class="p">;</span>     <span class="c1">//Selection of the current beginReadings() run</span>
-        <span class="kt">bool</span> <span class="nf">readMS5803</span><span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span> <span class="n">d</span><span class="p">);</span>  <span class="c1">//Append one served MS5803 reading (6 bytes from 0x48) unless faulted</span>
+        <span class="c1">//Append one served MS5803 reading unless faulted. Takes a reference to</span>
+        <span class="c1">//an array of exactly WALRUS_DATA_BYTES, not a pointer: it reads Block 3</span>
+        <span class="c1">//at offset 16, and a caller that passed a shorter buffer once read past</span>
+        <span class="c1">//the end of it. The size is now the compiler's business.</span>
+        <span class="kt">bool</span> <span class="nf">readMS5803</span><span class="p">(</span><span class="k">const</span> <span class="kt">uint8_t</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">d</span><span class="p">)[</span><span class="n">WALRUS_DATA_BYTES</span><span class="p">]);</span>
+        <span class="c1">//Fill a reading's 24 bytes, in two transactions because of the buffer</span>
+        <span class="c1">//above. Both are checked against the same captured reading by</span>
+        <span class="c1">//NW_Device::readData(), so they cannot straddle a rewrite.</span>
+        <span class="kt">bool</span> <span class="nf">readPage2</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="p">(</span><span class="o">&amp;</span><span class="n">d</span><span class="p">)[</span><span class="n">WALRUS_DATA_BYTES</span><span class="p">]);</span>
         <span class="kt">bool</span> <span class="nf">readMCP9808</span><span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span> <span class="n">d</span><span class="p">);</span> <span class="c1">//Append one served MCP9808 reading (2 bytes from 0x50) unless faulted</span>
         <span class="kt">void</span> <span class="nf">summarise</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="n">component</span><span class="p">);</span> <span class="c1">//Means into the single-value fields, NW_ERROR when no reading</span>
 <span class="p">};</span>
@@ -487,7 +567,7 @@ Distributed as-is; no warranty is given.
 
 <hr />
 
-<p>Updated on 2026-09-23 at 22:42:33 +0000</p>
+<p>Updated on 2026-09-30 at 19:40:08 +0000</p>
 
         
       </section>
