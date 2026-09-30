@@ -20,7 +20,12 @@ Walrus::Walrus()
 bool Walrus::begin(uint8_t Address_)
 {
     //Page 0 gates: Schema 1, the name "Walrus", firmware patch >= WALRUS_FW_MIN_PATCH.
-    return _dev.begin(Address_, "Walrus", WALRUS_FW_MIN_PATCH);
+    if(!_dev.begin(Address_, "Walrus", WALRUS_FW_MIN_PATCH)) return false;
+
+    //Which MS5803 is fitted, from Page 1. The columns are chosen from it here,
+    //once, because a file's header must mean the same thing for its whole life.
+    _modelRead = _dev.readBytes(MS5803_MODEL_REG, &_model, 1);
+    return true;
 }
 
 bool Walrus::updateMeasurements(uint8_t component)
@@ -128,6 +133,20 @@ float Walrus::getMS5803TemperatureStd()    { return nwScaled(_tempMS5803Readings
 float Walrus::getMS5803TemperatureSterr()  { return nwScaled(_tempMS5803Readings.sterr(),  100.0); }
 float Walrus::getMS5803TemperatureMedian() { return nwScaled(_tempMS5803Readings.median(), 100.0); }
 
+uint8_t  Walrus::getMS5803Model()    { return _model; }
+
+bool Walrus::modelKnown()
+{
+    //A sensor that never answered begin() has told us nothing, and relabelling
+    //a file's columns because it was unplugged would be worse than assuming the
+    //usual. Only a Page 1 we actually read, naming no MS5803, switches them.
+    if(!_modelRead) return true;
+
+    //The six parts a Walrus can carry, by the bar figure in the order code.
+    return _model == 1 || _model == 2 || _model == 5
+        || _model == 7 || _model == 14 || _model == 30;
+}
+
 uint32_t Walrus::getPressureADC()    { return _pressureAdc; }
 uint32_t Walrus::getTemperatureADC() { return _temperatureAdc; }
 void     Walrus::setADCColumns(bool enable) { _adcColumns = enable; }
@@ -183,26 +202,31 @@ String Walrus::reportNote()
 
 String Walrus::getHeader()
 {
-    String h = "Pressure [mBar],"; //return header string
-    if(_pressureCfg.columns()) h += "Pressure std [mBar],Pressure sterr [mBar],";
+    //With no model on Page 1 the device converts nothing, so the MS5803's own
+    //columns carry its conversions instead and say so. The MCP9808 is
+    //unaffected: it needs no model.
+    String h = modelKnown() ? "Pressure [mBar]," : "Pressure ADC [1],";
+    if(modelKnown() && _pressureCfg.columns()) h += "Pressure std [mBar],Pressure sterr [mBar],";
     h += "Temp DH [C],";
     if(_temperatureCfg.columns()) h += "Temp DH std [C],Temp DH sterr [C],";
-    h += "Temp DHt [C],";
-    if(_pressureCfg.columns()) h += "Temp DHt std [C],Temp DHt sterr [C],";
-    if(_adcColumns) h += "MS5803 D1 [1],MS5803 D2 [1],";
+    h += modelKnown() ? "Temp DHt [C]," : "Temp DHt ADC [1],";
+    if(modelKnown() && _pressureCfg.columns()) h += "Temp DHt std [C],Temp DHt sterr [C],";
+    if(modelKnown() && _adcColumns) h += "MS5803 D1 [1],MS5803 D2 [1],";
     return h;
 }
 
 String Walrus::getString()
 {
     updateMeasurements();                           //NW_ERROR (-9999) where a reading failed
-    String s = String(getPressure()) + ",";
-    if(_pressureCfg.columns()) s += String(getPressureStd()) + "," + String(getPressureSterr()) + ",";
+    String s = modelKnown() ? String(getPressure()) : String(getPressureADC());
+    s += ",";
+    if(modelKnown() && _pressureCfg.columns()) s += String(getPressureStd()) + "," + String(getPressureSterr()) + ",";
     s += String(getTemperature()) + ",";
     if(_temperatureCfg.columns()) s += String(getTemperatureStd()) + "," + String(getTemperatureSterr()) + ",";
-    s += String(getMS5803Temperature()) + ",";
-    if(_pressureCfg.columns()) s += String(getMS5803TemperatureStd()) + "," + String(getMS5803TemperatureSterr()) + ",";
-    if(_adcColumns) s += String(getPressureADC()) + "," + String(getTemperatureADC()) + ",";
+    s += modelKnown() ? String(getMS5803Temperature()) : String(getTemperatureADC());
+    s += ",";
+    if(modelKnown() && _pressureCfg.columns()) s += String(getMS5803TemperatureStd()) + "," + String(getMS5803TemperatureSterr()) + ",";
+    if(modelKnown() && _adcColumns) s += String(getPressureADC()) + "," + String(getTemperatureADC()) + ",";
     return s;
 }
 

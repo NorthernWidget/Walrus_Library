@@ -19,6 +19,9 @@ getters: pressure=-9999.0000 tExt=-9999.0000 tMS5803=-9999.0000 default=-9999.00
 [adc] with columns:   Pressure [mBar],Temp DH [C],Temp DHt [C],MS5803 D1 [1],MS5803 D2 [1],
 [adc] with values:    1013.25,4.05,21.37,5251266,8383686,
 [adc] 5 labels, 5 values
+[no model] model=0xFF known=0
+[no model] header: Pressure ADC [1],Temp DH [C],Temp DHt ADC [1],
+[no model] string: 5251266,4.05,8383686,
 [wrong name] begin=0 failure=WrongName
 [schema 0x00] begin=0 failure=NotSchema1
 [fw patch 0 < min 2] begin=0 fw=0 failure=OldFirmware
@@ -42,4 +45,4 @@ getters: pressure=-9999.0000 tExt=-9999.0000 tMS5803=-9999.0000 default=-9999.00
 [run MCP9808] header: Temp DH [C],
 [run MCP9808] row: 4.05,
 [dead MS5803] N=10: update=0 readings taken=1 pressureCount=0 pressure=-9999.00 note='MS5803NotAnswering'
-[status] 258 bytes: Walrus,5702-0007-002A-0000,0.2,2,,0.2.0,,0x00,UnitNone,0157616C72757300 0002020000000000 57020007002A0000 00000000004EC257,0000000000000000 0000000000000000 0000000000000000 0000000000000000,0106020000000000 CD8B010059080000 3A07000000000000 C2205000C6EC7F00
+[status] 258 bytes: Walrus,5702-0007-002A-0000,0.2,2,,0.2.0,,0x00,UnitNone,0157616C72757300 0002020000000000 57020007002A0000 00000000004EC257,0500000000000000 0000000000000000 0000000000000000 0000000000000000,0106020000000000 CD8B010059080000 3A07000000000000 C2205000C6EC7F00

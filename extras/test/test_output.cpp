@@ -14,13 +14,14 @@ TwoWire Wire;
 // external temperature int16 0.01 C at 0x50, and the conversions those came
 // from, D1 and D2 as uint32 each, in Block 3 at 0x58 and 0x5C).
 static void loadImage(int32_t pressure, int16_t tMS5803, int16_t tExt, uint8_t fwPatch = 2, uint8_t schema = 0x01,
-                      uint32_t d1 = 5251266, uint32_t d2 = 8383686) {
+                      uint32_t d1 = 5251266, uint32_t d2 = 8383686, uint8_t ms5803Model = 5) {
   uint8_t* r = Wire.image;
   nwLoadPage0(r, "Walrus", 0x57, 2, fwPatch, schema);               // Page 0 and Block 0, HW 0.2
   for (int i = 0; i < 4; i++) r[0x48 + i] = (pressure >> (8 * i)) & 0xFF;
   r[0x4C] = tMS5803 & 0xFF; r[0x4D] = (tMS5803 >> 8) & 0xFF;
   r[0x50] = tExt & 0xFF;    r[0x51] = (tExt >> 8) & 0xFF;
   for (int i = 0; i < 4; i++) { r[0x58 + i] = (d1 >> (8 * i)) & 0xFF; r[0x5C + i] = (d2 >> (8 * i)) & 0xFF; }
+  r[0x20] = ms5803Model;                                             // Page 1: which MS5803 is fitted
 }
 
 static void report(const char* name, Walrus& s) {
@@ -70,6 +71,17 @@ int main() {
       for (const char* q = head.c_str(); *q; q++) if (*q == ',') hc++;
       for (const char* q = line.c_str(); *q; q++) if (*q == ',') sc++;
       printf("[adc] %d labels, %d values%s\n", hc, sc, hc == sc ? "" : "  MISMATCH");
+  }
+
+  // 4c. No model on Page 1: the device converts nothing, so the MS5803's two
+  //     columns carry its own conversions and the header says so. The MCP9808
+  //     is unaffected, because it needs no model.
+  loadImage(1013250, 2137, 405, 2, 0x01, 5251266, 8383686, 0xFF);
+  {
+      Walrus s; s.begin();
+      printf("[no model] model=0x%02X known=%d\n", s.getMS5803Model(), s.modelKnown());
+      printf("[no model] header: %s\n", s.getHeader().c_str());
+      printf("[no model] string: %s\n", s.getString().c_str());
   }
 
   // 5. begin() gates: wrong name, wrong schema, firmware too old, and the versions it reports.

@@ -50,6 +50,13 @@ Distributed as-is; no warranty is given.
 /// longer request is answered with 0xFF past the sixteenth byte and a reading
 /// must be fetched in two transactions.
 #define WALRUS_READ_MAX 16
+/// Page 1, first byte: the bar figure of the MS5803 that is fitted, as
+/// NW-Provision wrote it. 0xFF is unprovisioned.
+#define MS5803_MODEL_REG 0x20
+/// What the raw getters read when no reading was taken. A real conversion is
+/// 24 bits, so all-ones cannot be mistaken for one, and it is what a failed
+/// bus read yields anyway.
+#define WALRUS_ADC_NOT_READ 0xFFFFFFFFUL
 
 /**
  * @class Walrus: .
@@ -161,8 +168,19 @@ class Walrus : public NW_Sensor
         uint32_t getPressureADC();
         /** @brief The MS5803's digital temperature value, D2, in its own counts; see getPressureADC(). */
         uint32_t getTemperatureADC();
-        /** @brief Include the D1 and D2 columns in getString() and getHeader(). Off by default. */
+        /** @brief Include the D1 and D2 columns in getString() and getHeader(). Off by default; ignored when the model is unknown, where they are the pressure and temperature columns already. */
         void setADCColumns(bool enable);
+        /**
+         * @brief Which MS5803 Page 1 says is fitted: 1, 2, 5, 7, 14 or 30 bar, or 0xFF unprovisioned.
+         * @details Read once by begin(). When it names no MS5803 the device
+         * cannot convert a reading, so getHeader() and getString() carry the
+         * MS5803's own conversions in place of pressure and its temperature,
+         * and say so in the header. The data are then still usable and can be
+         * converted afterwards, which a sentinel would not allow.
+         */
+        uint8_t getMS5803Model();
+        /** @brief True when getMS5803Model() names a part this library knows how to label. */
+        bool modelKnown();
 
         // --- Statistics getters ---
         // Computed two-pass in 32-bit float over the readings stored by the last
@@ -195,6 +213,11 @@ class Walrus : public NW_Sensor
         float getMS5803TemperatureMedian();
         /**
          * @brief Return header
+         * @warning Call begin() first. The MS5803's two columns depend on
+         * whether Page 1 names a part the device can convert for, which
+         * begin() is what reads. Called before begin(), this returns the
+         * columns for a convertible sensor and a file whose header disagrees
+         * with its rows.
          * @details "Pressure [mBar],Temp DH [C],Temp DHt [C]," with std and
          * sterr columns after a value when its statistics are enabled and
          * more than one reading is configured.
@@ -287,9 +310,11 @@ class Walrus : public NW_Sensor
         float _pressure = NW_ERROR;   //Mean of the last updateMeasurements() [mBar]
         float _tempExt = NW_ERROR;    //MCP9808 [C]
         float _tempMS5803 = NW_ERROR; //MS5803 [C]
-        uint32_t _pressureAdc = 0;    //MS5803 D1, counts, last reading
-        uint32_t _temperatureAdc = 0; //MS5803 D2, counts, last reading
+        uint32_t _pressureAdc = WALRUS_ADC_NOT_READ;    //MS5803 D1, counts, last reading
+        uint32_t _temperatureAdc = WALRUS_ADC_NOT_READ; //MS5803 D2, counts, last reading
         bool _adcColumns = false;     //the counts are a diagnostic: off unless asked for
+        uint8_t _model = 0xFF;        //Page 1's MS5803 model, read by begin()
+        bool _modelRead = false;      //whether begin() got to ask
         // Readings as the device serves them (raw register units), one array per
         // field; statistics come from these and are scaled on the way out.
         NW_Readings<int32_t, WALRUS_PRESSURE_CAPACITY>    _pressureReadings;   //uBar
