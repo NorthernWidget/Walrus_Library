@@ -27,9 +27,9 @@ getters: pressure=-9999.0000 tExt=-9999.0000 tMS5803=-9999.0000 default=-9999.00
 [MS5803 no ack] string: -9999.00,4.05,-9999.00,
 [unit reset] update=1 any=0 chip=7 kind=6 text='unit: restarted since configured' note='UnitRestarted'
 [handshake] requestReading=1 newReading=1 ready=1
-[cost] requestFrom calls for one getString(): 6
+[cost] requestFrom calls for one getString(): 8
 [N] setPressureReadings(5)=5 setTemperatureReadings(3)=3 setPressureReadings(99)=16
-[N=5,3] update=1 pressureCount=5 temperatureCount=3 lastRequest=3 requestFrom=40
+[N=5,3] update=1 pressureCount=5 temperatureCount=3 lastRequest=3 requestFrom=50
 [N=5,3] pressure mean=1013.2000 std=0.1581 sterr=0.0707 median=1013.2000 | tExt mean=4.1000 std=0.1000 median=4.1000 | tMS5803 mean=21.3700 std=0.0000
 [N=5,3] header: Pressure [mBar],Pressure std [mBar],Pressure sterr [mBar],Temp DH [C],Temp DH std [C],Temp DH sterr [C],Temp DHt [C],Temp DHt std [C],Temp DHt sterr [C],
 [N=5,3] string: 1013.20,0.16,0.07,4.10,0.10,0.06,21.37,0.00,0.00,

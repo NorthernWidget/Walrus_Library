@@ -45,6 +45,11 @@ Distributed as-is; no warranty is given.
 #define ADC_REG     0x58  // Schema 1 Page 2 Block 3: MS5803 D1 and D2, uint32 each, ADC counts
 /// Bytes of Page 2 a reading spans: Block 1 through Block 3, 0x48 to 0x5F.
 #define WALRUS_DATA_BYTES 24
+/// Most the Walrus can clock out in one read. Its USI peripheral has a 16-byte
+/// transmit buffer (ATTinyCore USI_TWI_Slave.h, TWI_TX_BUFFER_SIZE), so a
+/// longer request is answered with 0xFF past the sixteenth byte and a reading
+/// must be fetched in two transactions.
+#define WALRUS_READ_MAX 16
 
 /**
  * @class Walrus: .
@@ -298,6 +303,10 @@ class Walrus : public NW_Sensor
         //at offset 16, and a caller that passed a shorter buffer once read past
         //the end of it. The size is now the compiler's business.
         bool readMS5803(const uint8_t (&d)[WALRUS_DATA_BYTES]);
+        //Fill a reading's 24 bytes, in two transactions because of the buffer
+        //above. Both are checked against the same captured reading by
+        //NW_Device::readData(), so they cannot straddle a rewrite.
+        bool readPage2(uint8_t (&d)[WALRUS_DATA_BYTES]);
         bool readMCP9808(uint8_t* d); //Append one served MCP9808 reading (2 bytes from 0x50) unless faulted
         void summarise(uint8_t component); //Means into the single-value fields, NW_ERROR when no reading
 };

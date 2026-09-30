@@ -33,7 +33,7 @@ bool Walrus::updateMeasurements(uint8_t component)
         //covering Blocks 1 to 3, so nothing can straddle a rewrite.
         _dev.resetBatch();
         uint8_t d[WALRUS_DATA_BYTES];
-        if(_dev.takeReading(ALL) && _dev.readData(NW_REG_DATA, d, WALRUS_DATA_BYTES)) {
+        if(_dev.takeReading(ALL) && readPage2(d)) {
             readMS5803(d);
             readMCP9808(d + 8);
         }
@@ -56,7 +56,7 @@ bool Walrus::updatePressure()
     //Blocks 1 to 3 in one transaction: the device rewrites its data atomically,
     //so a single read cannot straddle a reading, where two reads could.
     uint8_t d[WALRUS_DATA_BYTES];
-    if(!_dev.takeReading(MS5803) || !_dev.readData(PRES_REG, d, WALRUS_DATA_BYTES)) return false;
+    if(!_dev.takeReading(MS5803) || !readPage2(d)) return false;
     return readMS5803(d);
 }
 
@@ -65,6 +65,14 @@ bool Walrus::updateTemperature()
     uint8_t d[2];
     if(!_dev.takeReading(MCP9808) || !_dev.readData(TEMP_EXT, d, 2)) return false;
     return readMCP9808(d);
+}
+
+bool Walrus::readPage2(uint8_t (&d)[WALRUS_DATA_BYTES])
+{
+    //Blocks 1 and 2 first, then Block 3: sixteen bytes and eight, because the
+    //Walrus cannot clock out more than sixteen at a time.
+    if(!_dev.readData(PRES_REG, d, WALRUS_READ_MAX)) return false;
+    return _dev.readData(ADC_REG, d + WALRUS_READ_MAX, WALRUS_DATA_BYTES - WALRUS_READ_MAX);
 }
 
 bool Walrus::readMS5803(const uint8_t (&d)[WALRUS_DATA_BYTES])
