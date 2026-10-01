@@ -13,6 +13,29 @@ Distributed as-is; no warranty is given.
 #include <Wire.h> // Wire library is used for I2C
 #include "Walrus_I2C.h"
 
+//The column names, from NW_Core's generated table. They are aliased here only
+//to keep the lines below readable: the strings themselves are never typed, and
+//which register each one names is recorded in the Walrus appendix of
+//NW-Device-Specification, beside the register map.
+//
+//A summary row carries a mean, a per-reading row carries one reading, and the
+//vocabulary says which with its prefix operator. Both forms are generated from
+//the same CSV row, so the pair cannot drift apart.
+#define HDR_PRESSURE         NW_HDR_SUBMERSIBLE_SENSOR_WALRUS_FLUID__PRESSURE
+#define HDR_PRESSURE_MEAN    NW_HDR_MEAN_OF_SUBMERSIBLE_SENSOR_WALRUS_FLUID__PRESSURE
+#define HDR_PRESSURE_STD     NW_HDR_STD_OF_SUBMERSIBLE_SENSOR_WALRUS_FLUID__PRESSURE
+#define HDR_PRESSURE_STERR   NW_HDR_STERR_OF_SUBMERSIBLE_SENSOR_WALRUS_FLUID__PRESSURE
+#define HDR_TEMP_EXT         NW_HDR_SUBMERSIBLE_SENSOR_WALRUS_FLUID__TEMPERATURE
+#define HDR_TEMP_EXT_MEAN    NW_HDR_MEAN_OF_SUBMERSIBLE_SENSOR_WALRUS_FLUID__TEMPERATURE
+#define HDR_TEMP_EXT_STD     NW_HDR_STD_OF_SUBMERSIBLE_SENSOR_WALRUS_FLUID__TEMPERATURE
+#define HDR_TEMP_EXT_STERR   NW_HDR_STERR_OF_SUBMERSIBLE_SENSOR_WALRUS_FLUID__TEMPERATURE
+#define HDR_TEMP_MS5803      NW_HDR_SUBMERSIBLE_SENSOR_WALRUS_PRESSURE_SENSOR__TEMPERATURE
+#define HDR_TEMP_MS5803_MEAN NW_HDR_MEAN_OF_SUBMERSIBLE_SENSOR_WALRUS_PRESSURE_SENSOR__TEMPERATURE
+#define HDR_TEMP_MS5803_STD  NW_HDR_STD_OF_SUBMERSIBLE_SENSOR_WALRUS_PRESSURE_SENSOR__TEMPERATURE
+#define HDR_TEMP_MS5803_STERR NW_HDR_STERR_OF_SUBMERSIBLE_SENSOR_WALRUS_PRESSURE_SENSOR__TEMPERATURE
+#define HDR_D1               NW_HDR_SUBMERSIBLE_SENSOR_WALRUS_PRESSURE_SENSOR_PRESSURE__ADC_OUTPUT
+#define HDR_D2               NW_HDR_SUBMERSIBLE_SENSOR_WALRUS_PRESSURE_SENSOR_TEMPERATURE__ADC_OUTPUT
+
 Walrus::Walrus()
 {
 }
@@ -212,16 +235,41 @@ String Walrus::reportNote()
 
 String Walrus::getHeader()
 {
-    //With no model on Page 1 the device converts nothing, so the MS5803's own
-    //columns carry its conversions instead and say so. The MCP9808 is
-    //unaffected: it needs no model.
-    String h = modelKnown() ? "Pressure [mBar]," : "Pressure ADC [1],";
-    if(modelKnown() && _pressureCfg.columns()) h += "Pressure std [mBar],Pressure sterr [mBar],";
-    h += "Temp DH [C],";
-    if(_temperatureCfg.columns()) h += "Temp DH std [C],Temp DH sterr [C],";
-    h += modelKnown() ? "Temp DHt [C]," : "Temp DHt ADC [1],";
-    if(modelKnown() && _pressureCfg.columns()) h += "Temp DHt std [C],Temp DHt sterr [C],";
-    if(modelKnown() && _adcColumns) h += "MS5803 D1 [1],MS5803 D2 [1],";
+    //The summary row: every value is a mean over the readings taken, which is
+    //why these carry the mean_of_ operator. With no model on Page 1 the device
+    //converts nothing, so the MS5803's two columns carry its conversions
+    //instead and say so. The MCP9808 is unaffected: it needs no model.
+    String h;
+    h += modelKnown() ? F(HDR_PRESSURE_MEAN) : F(HDR_D1);
+    h += ",";
+    if(modelKnown() && _pressureCfg.columns()) {
+        h += F(HDR_PRESSURE_STD);
+        h += ",";
+        h += F(HDR_PRESSURE_STERR);
+        h += ",";
+    }
+    h += F(HDR_TEMP_EXT_MEAN);
+    h += ",";
+    if(_temperatureCfg.columns()) {
+        h += F(HDR_TEMP_EXT_STD);
+        h += ",";
+        h += F(HDR_TEMP_EXT_STERR);
+        h += ",";
+    }
+    h += modelKnown() ? F(HDR_TEMP_MS5803_MEAN) : F(HDR_D2);
+    h += ",";
+    if(modelKnown() && _pressureCfg.columns()) {
+        h += F(HDR_TEMP_MS5803_STD);
+        h += ",";
+        h += F(HDR_TEMP_MS5803_STERR);
+        h += ",";
+    }
+    if(modelKnown() && _adcColumns) {
+        h += F(HDR_D1);
+        h += ",";
+        h += F(HDR_D2);
+        h += ",";
+    }
     return h;
 }
 
@@ -262,9 +310,18 @@ size_t Walrus::printHeader(Print& out)
     //none. With no model on Page 1 the MS5803's two columns carry its
     //conversions instead, exactly as they do in getHeader().
     size_t n = 0;
-    if(_component & MS5803) n += out.print(modelKnown() ? "Pressure [mBar]," : "Pressure ADC [1],");
-    if(_component & MCP9808) n += out.print("Temp DH [C],");
-    if(_component & MS5803) n += out.print(modelKnown() ? "Temp DHt [C]," : "Temp DHt ADC [1],");
+    if(_component & MS5803) {
+        n += out.print(modelKnown() ? F(HDR_PRESSURE) : F(HDR_D1));
+        n += out.print(',');
+    }
+    if(_component & MCP9808) {
+        n += out.print(F(HDR_TEMP_EXT));
+        n += out.print(',');
+    }
+    if(_component & MS5803) {
+        n += out.print(modelKnown() ? F(HDR_TEMP_MS5803) : F(HDR_D2));
+        n += out.print(',');
+    }
     return n;
 }
 

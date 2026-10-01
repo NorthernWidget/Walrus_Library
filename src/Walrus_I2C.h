@@ -218,9 +218,15 @@ class Walrus : public NW_Sensor
          * begin() is what reads. Called before begin(), this returns the
          * columns for a convertible sensor and a file whose header disagrees
          * with its rows.
-         * @details "Pressure [mBar],Temp DH [C],Temp DHt [C]," with std and
-         * sterr columns after a value when its statistics are enabled and
-         * more than one reading is configured.
+         * @details The CSDMS standard names from NW_Core's generated table,
+         * each with its UCUM unit in brackets and a trailing comma. Every value
+         * is a mean over the readings taken, so these carry the mean_of_
+         * operator: submersible-sensor~walrus_fluid__mean_of_pressure [mbar],
+         * then the MCP9808's, then the MS5803's own. Standard-deviation and
+         * standard-error columns follow a value when its statistics are enabled
+         * and more than one reading is configured. Which register each name
+         * belongs to is recorded in the Walrus appendix of
+         * NW-Device-Specification.
          */
         String getHeader();
         /**
@@ -236,6 +242,10 @@ class Walrus : public NW_Sensor
          * @brief Print the header matching printReading(): column names with
          * units, each followed by a comma, for the chips selected by
          * beginReadings(). No statistics columns: one reading has none.
+         * These carry the bare standard names rather than getHeader()'s
+         * mean_of_ forms, because each value here is one reading. The two sets
+         * differ for that reason and no other: both are generated from the same
+         * rows of standard-names.csv.
          * @param out Any Print destination (SdFat File, Serial, ...).
          * @return Bytes written.
          */
@@ -243,8 +253,10 @@ class Walrus : public NW_Sensor
         /**
          * @brief Print the stored reading of the selected chips, each value
          * followed by a comma. Does not acquire: call updateMeasurements()
-         * first, or use logReading(). Writes: pressure [mBar], MS5803
-         * temperature [C] for MS5803; external temperature [C] for MCP9808.
+         * first, or use logReading(). Writes pressure then the MS5803's
+         * temperature for the MS5803, and the external temperature for the
+         * MCP9808, in the column order printHeader() gives. With no model on
+         * Page 1 the MS5803's two values are its own conversions instead.
          * @return Bytes written.
          */
         size_t printReading(Print& out);

@@ -83,10 +83,10 @@ int main() {
       printf("[no model] header: %s\n", s.getHeader().c_str());
       printf("[no model] string: %s\n", s.getString().c_str());
       // The per-reading interface must say the same thing as the summary one.
-      char pb[96];
+      char pb[256];
       s.beginReadings(Walrus::ALL, 2);
       BufferPrint bh(pb, sizeof pb); s.printHeader(bh);
-      printf("[no model run] header: %s\n", pb);
+      printf("[no model run] header: %s trunc=%d\n", pb, bh.truncated());
       BufferPrint bp(pb, sizeof pb); s.logReading(bp); s.endReadings();
       printf("[no model run] row: %s\n", pb);
   }
@@ -104,7 +104,7 @@ int main() {
   // 6. Faults: the MS5803 does not acknowledge (status bit 1, pan-fault, latched 0x01);
   //    the MCP9808 value survives. Then a unit reset code with a clean status.
   loadImage(1013250, 2137, 405);
-  { Walrus s; s.begin(); char pb[48];
+  { Walrus s; s.begin(); char pb[256];
     // One good reading first, which fills the conversions. A failed reading
     // after it must not leave them standing: on a Walrus whose Page 1 names no
     // part they are the value column, where a stale word reads as a measurement.
@@ -157,15 +157,15 @@ int main() {
   // 9. Reading interface: header, three logged readings of ALL, then MCP9808 alone; the
   //    batch word for the run reaches the device.
   loadImage(1013250, 2137, 405);
-  { Walrus s; s.begin(); int k = 0; char pb[96];
+  { Walrus s; s.begin(); int k = 0; char pb[256];
     onReading = [&](TwoWire& w) { k++; int32_t p = 1013000 + 50 * k; for (int i = 0; i < 4; i++) w.image[0x48 + i] = (p >> (8 * i)) & 0xFF; };
     lastRequest = 0; s.beginReadings(Walrus::ALL, 3);
-    BufferPrint bh(pb, sizeof pb); s.printHeader(bh); printf("[run ALL] header: %s lastRequest=%u\n", pb, lastRequest);
+    BufferPrint bh(pb, sizeof pb); s.printHeader(bh); printf("[run ALL] header: %s trunc=%d lastRequest=%u\n", pb, bh.truncated(), lastRequest);
     for (int i = 0; i < 3; i++) { BufferPrint bp(pb, sizeof pb); size_t n = s.logReading(bp); printf("[run ALL] row %d (%zu bytes): %s\n", i, n, pb); }
     s.endReadings();
     printf("[run ALL] pressure count=%u mean=%.4f median=%.4f\n", s.getPressureCount(), s.getPressureMean(), s.getPressureMedian());
     s.beginReadings(Walrus::MCP9808);
-    BufferPrint bh2(pb, sizeof pb); s.printHeader(bh2); printf("[run MCP9808] header: %s\n", pb);
+    BufferPrint bh2(pb, sizeof pb); s.printHeader(bh2); printf("[run MCP9808] header: %s trunc=%d\n", pb, bh2.truncated());
     BufferPrint bp2(pb, sizeof pb); s.logReading(bp2); s.endReadings(); printf("[run MCP9808] row: %s\n", pb);
     onReading = nullptr; }
 
