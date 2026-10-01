@@ -82,6 +82,13 @@ int main() {
       printf("[no model] model=0x%02X known=%d\n", s.getMS5803Model(), s.modelKnown());
       printf("[no model] header: %s\n", s.getHeader().c_str());
       printf("[no model] string: %s\n", s.getString().c_str());
+      // The per-reading interface must say the same thing as the summary one.
+      char pb[96];
+      s.beginReadings(Walrus::ALL, 2);
+      BufferPrint bh(pb, sizeof pb); s.printHeader(bh);
+      printf("[no model run] header: %s\n", pb);
+      BufferPrint bp(pb, sizeof pb); s.logReading(bp); s.endReadings();
+      printf("[no model run] row: %s\n", pb);
   }
 
   // 5. begin() gates: wrong name, wrong schema, firmware too old, and the versions it reports.

@@ -256,17 +256,35 @@ void Walrus::endReadings()
 
 size_t Walrus::printHeader(Print& out)
 {
+    //The columns printReading() writes, in the order getHeader() and the
+    //specification's binding table give: pressure, the medium's temperature,
+    //then the MS5803's own. No statistics columns, because one reading has
+    //none. With no model on Page 1 the MS5803's two columns carry its
+    //conversions instead, exactly as they do in getHeader().
     size_t n = 0;
-    if(_component & MS5803) n += out.print("Pressure [mBar],Temp DHt [C],");
+    if(_component & MS5803) n += out.print(modelKnown() ? "Pressure [mBar]," : "Pressure ADC [1],");
     if(_component & MCP9808) n += out.print("Temp DH [C],");
+    if(_component & MS5803) n += out.print(modelKnown() ? "Temp DHt [C]," : "Temp DHt ADC [1],");
     return n;
 }
 
 size_t Walrus::printReading(Print& out)
 {
     size_t n = 0;
-    if(_component & MS5803) { n += out.print(_pressure); n += out.print(','); n += out.print(_tempMS5803); n += out.print(','); }
-    if(_component & MCP9808) { n += out.print(_tempExt); n += out.print(','); }
+    if(_component & MS5803) {
+        if(modelKnown()) n += out.print(_pressure);
+        else n += out.print(_pressureAdc);
+        n += out.print(',');
+    }
+    if(_component & MCP9808) {
+        n += out.print(_tempExt);
+        n += out.print(',');
+    }
+    if(_component & MS5803) {
+        if(modelKnown()) n += out.print(_tempMS5803);
+        else n += out.print(_temperatureAdc);
+        n += out.print(',');
+    }
     return n;
 }
 
