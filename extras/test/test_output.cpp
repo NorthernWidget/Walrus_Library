@@ -98,11 +98,20 @@ int main() {
   //    the MCP9808 value survives. Then a unit reset code with a clean status.
   loadImage(1013250, 2137, 405);
   { Walrus s; s.begin(); char pb[48];
+    // One good reading first, which fills the conversions. A failed reading
+    // after it must not leave them standing: on a Walrus whose Page 1 names no
+    // part they are the value column, where a stale word reads as a measurement.
+    s.updateMeasurements();
+    printf("[before the fault] D1=%lu D2=%lu\n",
+           (unsigned long)s.getPressureADC(), (unsigned long)s.getTemperatureADC());
     onReading = [](TwoWire& w) { w.image[0x40] = 0x83; w.image[0x47] = 0x01; };
     bool ok = s.updateMeasurements(); BufferPrint bp(pb, sizeof pb); s.printReport(bp);
     printf("[MS5803 no ack] update=%d faulted(0)=%d faulted(1)=%d any=%d chip=%u kind=%u text='%s' note='%s'\n",
            ok, s.faulted(0), s.faulted(1), s.anyFault(), s.reportChip(), s.reportKind(), pb, s.reportNote().c_str());
     printf("[MS5803 no ack] string: %s\n", s.getString().c_str());
+    printf("[MS5803 no ack] D1=%lu D2=%lu notRead=%d\n",
+           (unsigned long)s.getPressureADC(), (unsigned long)s.getTemperatureADC(),
+           s.getPressureADC() == WALRUS_ADC_NOT_READ && s.getTemperatureADC() == WALRUS_ADC_NOT_READ);
     onReading = [](TwoWire& w) { w.image[0x40] = 0x01; w.image[0x47] = 0xE6; };
     ok = s.updateMeasurements(); BufferPrint bp2(pb, sizeof pb); s.printReport(bp2);
     printf("[unit reset] update=%d any=%d chip=%u kind=%u text='%s' note='%s'\n", ok, s.anyFault(), s.reportChip(), s.reportKind(), pb, s.reportNote().c_str());

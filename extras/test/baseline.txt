@@ -26,8 +26,10 @@ getters: pressure=-9999.0000 tExt=-9999.0000 tMS5803=-9999.0000 default=-9999.00
 [schema 0x00] begin=0 failure=NotSchema1
 [fw patch 0 < min 2] begin=0 fw=0 failure=OldFirmware
 [versions] begin=1 hw=0.2 fw=2 failure=None
+[before the fault] D1=5251266 D2=8383686
 [MS5803 no ack] update=0 faulted(0)=1 faulted(1)=0 any=1 chip=0 kind=1 text='MS5803: not answering' note='MS5803NotAnswering'
 [MS5803 no ack] string: -9999.00,4.05,-9999.00,
+[MS5803 no ack] D1=4294967295 D2=4294967295 notRead=1
 [unit reset] update=1 any=0 chip=7 kind=6 text='unit: restarted since configured' note='UnitRestarted'
 [handshake] requestReading=1 newReading=1 ready=1
 [cost] requestFrom calls for one getString(): 8

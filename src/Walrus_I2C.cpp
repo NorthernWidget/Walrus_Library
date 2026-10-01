@@ -31,7 +31,11 @@ bool Walrus::begin(uint8_t Address_)
 bool Walrus::updateMeasurements(uint8_t component)
 {
     bool doMS = component & MS5803, doMCP = component & MCP9808;
-    if(doMS) { _pressureReadings.reset(); _tempMS5803Readings.reset(); }
+    //The conversions are reading state like the arrays beside them. A reading
+    //that does not complete must leave none of the last one behind: with no
+    //model on Page 1 the conversions are the value column, where a stale word
+    //reads as a measurement rather than as a gap.
+    if(doMS) { _pressureReadings.reset(); _tempMS5803Readings.reset(); clearADC(); }
     if(doMCP) _tempExtReadings.reset();
     if(doMS && doMCP && _pressureCfg.n <= 1 && _temperatureCfg.n <= 1) {
         //One reading of everything: both chips in one trigger, one 24-byte read
@@ -147,6 +151,12 @@ bool Walrus::modelKnown()
         || _model == 7 || _model == 14 || _model == 30;
 }
 
+void Walrus::clearADC()
+{
+    _pressureAdc = WALRUS_ADC_NOT_READ;
+    _temperatureAdc = WALRUS_ADC_NOT_READ;
+}
+
 uint32_t Walrus::getPressureADC()    { return _pressureAdc; }
 uint32_t Walrus::getTemperatureADC() { return _temperatureAdc; }
 void     Walrus::setADCColumns(bool enable) { _adcColumns = enable; }
@@ -234,7 +244,7 @@ String Walrus::getString()
 void Walrus::beginReadings(uint8_t component, uint16_t n)
 {
     _component = component;
-    if(component & MS5803) { _pressureReadings.reset(); _tempMS5803Readings.reset(); }
+    if(component & MS5803) { _pressureReadings.reset(); _tempMS5803Readings.reset(); clearADC(); }
     if(component & MCP9808) _tempExtReadings.reset();
     _dev.beginBatch(n);
 }

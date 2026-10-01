@@ -310,6 +310,7 @@ class Walrus : public NW_Sensor
         float _pressure = NW_ERROR;   //Mean of the last updateMeasurements() [mBar]
         float _tempExt = NW_ERROR;    //MCP9808 [C]
         float _tempMS5803 = NW_ERROR; //MS5803 [C]
+        void clearADC();              //Both conversions back to WALRUS_ADC_NOT_READ
         uint32_t _pressureAdc = WALRUS_ADC_NOT_READ;    //MS5803 D1, counts, last reading
         uint32_t _temperatureAdc = WALRUS_ADC_NOT_READ; //MS5803 D2, counts, last reading
         bool _adcColumns = false;     //the counts are a diagnostic: off unless asked for
