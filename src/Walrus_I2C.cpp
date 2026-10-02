@@ -58,7 +58,11 @@ bool Walrus::updateMeasurements(uint8_t component)
     //that does not complete must leave none of the last one behind: with no
     //model on Page 1 the conversions are the value column, where a stale word
     //reads as a measurement rather than as a gap.
-    if(doMS) { _pressureReadings.reset(); _tempMS5803Readings.reset(); clearADC(); }
+    if(doMS) {
+        _pressureReadings.reset();
+        _tempMS5803Readings.reset();
+        clearADC();
+    }
     if(doMCP) _tempExtReadings.reset();
     if(doMS && doMCP && _pressureCfg.n <= 1 && _temperatureCfg.n <= 1) {
         //One reading of everything: both chips in one trigger, one 24-byte read
@@ -338,7 +342,11 @@ String Walrus::getString()
 void Walrus::beginReadings(uint8_t component, uint16_t n)
 {
     _component = component;
-    if(component & MS5803) { _pressureReadings.reset(); _tempMS5803Readings.reset(); clearADC(); }
+    if(component & MS5803) {
+        _pressureReadings.reset();
+        _tempMS5803Readings.reset();
+        clearADC();
+    }
     if(component & MCP9808) _tempExtReadings.reset();
     _dev.beginBatch(n);
 }
