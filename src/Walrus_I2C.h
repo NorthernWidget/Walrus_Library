@@ -238,7 +238,7 @@ class Walrus : public NW_Sensor
          * @param out Where to print.
          * @return Bytes printed.
          */
-        size_t printDataHeader(Print& out);
+        size_t printDataHeader(Print& out) override;
 
         /**
          * @brief Print one summary row, in printDataHeader()'s column order.
@@ -248,7 +248,7 @@ class Walrus : public NW_Sensor
          * @param out Where to print.
          * @return Bytes printed.
          */
-        size_t printDataRow(Print& out);
+        size_t printDataRow(Print& out) override;
 
         String getHeader();
         /**
