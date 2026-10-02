@@ -233,58 +233,104 @@ String Walrus::reportNote()
     return _dev.report().note(chips, 2);
 }
 
-String Walrus::getHeader()
+//The summary interface: the columns a logger writes, streamed. getHeader() and
+//getString() are the same column set collected into a String, which keeps one
+//definition of it. See LIBRARY-DESIGN.md section 14.
+size_t Walrus::printDataHeader(Print& out)
 {
     //The summary row: every value is a mean over the readings taken, which is
     //why these carry the mean_of_ operator. With no model on Page 1 the device
     //converts nothing, so the MS5803's two columns carry its conversions
     //instead and say so. The MCP9808 is unaffected: it needs no model.
-    String h;
-    h += modelKnown() ? F(HDR_PRESSURE_MEAN) : F(HDR_D1);
-    h += ",";
+    size_t n = 0;
+    n += out.print(modelKnown() ? F(HDR_PRESSURE_MEAN) : F(HDR_D1));
+    n += out.print(',');
     if(modelKnown() && _pressureCfg.columns()) {
-        h += F(HDR_PRESSURE_STD);
-        h += ",";
-        h += F(HDR_PRESSURE_STERR);
-        h += ",";
+        n += out.print(F(HDR_PRESSURE_STD));
+        n += out.print(',');
+        n += out.print(F(HDR_PRESSURE_STERR));
+        n += out.print(',');
     }
-    h += F(HDR_TEMP_EXT_MEAN);
-    h += ",";
+    n += out.print(F(HDR_TEMP_EXT_MEAN));
+    n += out.print(',');
     if(_temperatureCfg.columns()) {
-        h += F(HDR_TEMP_EXT_STD);
-        h += ",";
-        h += F(HDR_TEMP_EXT_STERR);
-        h += ",";
+        n += out.print(F(HDR_TEMP_EXT_STD));
+        n += out.print(',');
+        n += out.print(F(HDR_TEMP_EXT_STERR));
+        n += out.print(',');
     }
-    h += modelKnown() ? F(HDR_TEMP_MS5803_MEAN) : F(HDR_D2);
-    h += ",";
+    n += out.print(modelKnown() ? F(HDR_TEMP_MS5803_MEAN) : F(HDR_D2));
+    n += out.print(',');
     if(modelKnown() && _pressureCfg.columns()) {
-        h += F(HDR_TEMP_MS5803_STD);
-        h += ",";
-        h += F(HDR_TEMP_MS5803_STERR);
-        h += ",";
+        n += out.print(F(HDR_TEMP_MS5803_STD));
+        n += out.print(',');
+        n += out.print(F(HDR_TEMP_MS5803_STERR));
+        n += out.print(',');
     }
     if(modelKnown() && _adcColumns) {
-        h += F(HDR_D1);
-        h += ",";
-        h += F(HDR_D2);
-        h += ",";
+        n += out.print(F(HDR_D1));
+        n += out.print(',');
+        n += out.print(F(HDR_D2));
+        n += out.print(',');
     }
+    return n;
+}
+
+size_t Walrus::printDataRow(Print& out)
+{
+    //The values the last updateMeasurements() left, in printDataHeader()'s
+    //order. This takes no reading: the caller has already acquired, and a row
+    //written to two sinks must not acquire twice.
+    size_t n = 0;
+    if(modelKnown()) n += out.print(getPressure());
+    else n += out.print(getPressureADC());
+    n += out.print(',');
+    if(modelKnown() && _pressureCfg.columns()) {
+        n += out.print(getPressureStd());
+        n += out.print(',');
+        n += out.print(getPressureSterr());
+        n += out.print(',');
+    }
+    n += out.print(getTemperature());
+    n += out.print(',');
+    if(_temperatureCfg.columns()) {
+        n += out.print(getTemperatureStd());
+        n += out.print(',');
+        n += out.print(getTemperatureSterr());
+        n += out.print(',');
+    }
+    if(modelKnown()) n += out.print(getMS5803Temperature());
+    else n += out.print(getTemperatureADC());
+    n += out.print(',');
+    if(modelKnown() && _pressureCfg.columns()) {
+        n += out.print(getMS5803TemperatureStd());
+        n += out.print(',');
+        n += out.print(getMS5803TemperatureSterr());
+        n += out.print(',');
+    }
+    if(modelKnown() && _adcColumns) {
+        n += out.print(getPressureADC());
+        n += out.print(',');
+        n += out.print(getTemperatureADC());
+        n += out.print(',');
+    }
+    return n;
+}
+
+String Walrus::getHeader()
+{
+    String h;
+    NW_StringPrint p(h);
+    printDataHeader(p);
     return h;
 }
 
 String Walrus::getString()
 {
     updateMeasurements();                           //NW_ERROR (-9999) where a reading failed
-    String s = modelKnown() ? String(getPressure()) : String(getPressureADC());
-    s += ",";
-    if(modelKnown() && _pressureCfg.columns()) s += String(getPressureStd()) + "," + String(getPressureSterr()) + ",";
-    s += String(getTemperature()) + ",";
-    if(_temperatureCfg.columns()) s += String(getTemperatureStd()) + "," + String(getTemperatureSterr()) + ",";
-    s += modelKnown() ? String(getMS5803Temperature()) : String(getTemperatureADC());
-    s += ",";
-    if(modelKnown() && _pressureCfg.columns()) s += String(getMS5803TemperatureStd()) + "," + String(getMS5803TemperatureSterr()) + ",";
-    if(modelKnown() && _adcColumns) s += String(getPressureADC()) + "," + String(getTemperatureADC()) + ",";
+    String s;
+    NW_StringPrint p(s);
+    printDataRow(p);
     return s;
 }
 

@@ -228,6 +228,28 @@ class Walrus : public NW_Sensor
          * belongs to is recorded in the Walrus appendix of
          * NW-Device-Specification.
          */
+        /**
+         * @brief Print the summary columns a logger writes: the means, with the
+         * statistics columns each chip group has enabled.
+         * @details The streaming form of getHeader(), and its definition: that
+         * function prints through this one into a String. Pass a `File` to write
+         * the card, `Serial` to write the monitor. Distinct from printHeader(),
+         * which is the burst interface and carries no statistics.
+         * @param out Where to print.
+         * @return Bytes printed.
+         */
+        size_t printDataHeader(Print& out);
+
+        /**
+         * @brief Print one summary row, in printDataHeader()'s column order.
+         * @details Takes no reading: it prints what the last updateMeasurements()
+         * left, which is what lets a caller write the same row to two sinks
+         * without acquiring twice.
+         * @param out Where to print.
+         * @return Bytes printed.
+         */
+        size_t printDataRow(Print& out);
+
         String getHeader();
         /**
          * @brief Take a reading (updateMeasurements()) and return it as a string
