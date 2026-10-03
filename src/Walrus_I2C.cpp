@@ -419,9 +419,14 @@ size_t Walrus::logReading(Print& out)
 //The logger's three calls on a watched sensor: come back on the bus, take the
 //readings, and give up a word when something happened. See LIBRARY-DESIGN.md
 //section 14 step 4.
-bool Walrus::wake()
+uint8_t Walrus::defaultAddress() const
 {
-    return begin(_dev.address());
+    return DEFAULT_ADDRESS;
+}
+
+bool Walrus::wake(uint8_t address)
+{
+    return begin(address);
 }
 
 bool Walrus::acquire()
