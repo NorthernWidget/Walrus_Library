@@ -14,7 +14,7 @@ Distributed as-is; no warranty is given.
 #define Walrus_I2C_h
 
 #include <Arduino.h>
-#include <NW_Core.h>   // NW_Core: NW_Device (Schema 1 protocol), NW_Report
+#include <NW_Core.h>  // NW_Core: NW_Device (Schema 1 protocol), NW_Report
 
 /// Lowest firmware patch (Page 0 byte 0x0A) this library accepts: patch 2,
 /// the first to serve the MS5803's own conversions in Page 2 Block 3.
@@ -33,16 +33,16 @@ Distributed as-is; no warranty is given.
 // capacity (one per chip group; no heap); set<Field>Readings(n) clamps to it.
 // Override before the include to trade RAM for a longer batch.
 #ifndef WALRUS_PRESSURE_CAPACITY
-  #define WALRUS_PRESSURE_CAPACITY 16   // MS5803: pressure and its temperature
+#define WALRUS_PRESSURE_CAPACITY 16  // MS5803: pressure and its temperature
 #endif
 #ifndef WALRUS_TEMPERATURE_CAPACITY
-  #define WALRUS_TEMPERATURE_CAPACITY 16   // MCP9808: external temperature
+#define WALRUS_TEMPERATURE_CAPACITY 16  // MCP9808: external temperature
 #endif
 
-#define PRES_REG    0x48  // Schema 1 Page 2 Block 1: pressure, int32, µBar
+#define PRES_REG 0x48     // Schema 1 Page 2 Block 1: pressure, int32, µBar
 #define TEMP_MS5803 0x4C  // Schema 1 Page 2 Block 1: MS5803 temperature, int16, 0.01 °C
-#define TEMP_EXT    0x50  // Schema 1 Page 2 Block 2: external temperature (MCP9808), int16, 0.01 °C
-#define ADC_REG     0x58  // Schema 1 Page 2 Block 3: MS5803 D1 and D2, uint32 each, ADC counts
+#define TEMP_EXT 0x50     // Schema 1 Page 2 Block 2: external temperature (MCP9808), int16, 0.01 °C
+#define ADC_REG 0x58      // Schema 1 Page 2 Block 3: MS5803 D1 and D2, uint32 each, ADC counts
 /// Bytes of Page 2 a reading spans: Block 1 through Block 3, 0x48 to 0x5F.
 #define WALRUS_DATA_BYTES 24
 /// Most the Walrus can clock out in one read. Its USI peripheral has a 16-byte
@@ -68,22 +68,21 @@ Distributed as-is; no warranty is given.
  *
  * \verbatim [![DOI](https://zenodo.org/badge/219609527.svg)](https://zenodo.org/badge/latestdoi/219609527) \endverbatim
  */
-class Walrus : public NW_Sensor
-{
-    public:
-        /** @brief Default I2C address: NW-Device-Specification Schema 1 'W' (0x57). */
-        static constexpr uint8_t DEFAULT_ADDRESS = 0x57;
-        /** @brief Chip groups a reading can cover (the spec's chip table: 0 MS5803, 1 MCP9808). */
-        enum Component : uint8_t {
-            MS5803  = 0x01,  ///< pressure and the MS5803's own temperature
-            MCP9808 = 0x02,  ///< external (water) temperature
-            ALL     = 0x03
-        };
-        /**
+class Walrus : public NW_Sensor {
+public:
+  /** @brief Default I2C address: NW-Device-Specification Schema 1 'W' (0x57). */
+  static constexpr uint8_t DEFAULT_ADDRESS = 0x57;
+  /** @brief Chip groups a reading can cover (the spec's chip table: 0 MS5803, 1 MCP9808). */
+  enum Component : uint8_t {
+    MS5803 = 0x01,   ///< pressure and the MS5803's own temperature
+    MCP9808 = 0x02,  ///< external (water) temperature
+    ALL = 0x03
+  };
+  /**
          * @brief Instantiate Walrus object
          */
-        Walrus();  // Constructor
-        /**
+  Walrus();  // Constructor
+  /**
          * @brief Begin communications with the Walrus using a prescribed
          * address.
          * @details Refuses the device unless Page 0 says Schema 1, the name
@@ -92,8 +91,8 @@ class Walrus : public NW_Sensor
          * @param Address_: I2C address of Walrus
          * @return true if the device answered and passed the three gates
          */
-        bool begin(uint8_t Address_ = DEFAULT_ADDRESS);
-        /**
+  bool begin(uint8_t Address_ = DEFAULT_ADDRESS);
+  /**
          * @brief Take the configured number of readings of the selected chips
          * and store them for the getters and the statistics.
          * @details Each reading triggers the device and waits for its reading
@@ -105,28 +104,28 @@ class Walrus : public NW_Sensor
          * @param component Walrus::ALL (default), Walrus::MS5803 or Walrus::MCP9808.
          * @return true if every selected chip gave at least one valid reading
          */
-        bool updateMeasurements(uint8_t component = ALL);
-        /** @brief Take ONE reading of the MS5803 (pressure and its temperature) and append it to the readings. */
-        bool updatePressure();
-        /** @brief Take ONE reading of the MCP9808 (external temperature) and append it to the readings. */
-        bool updateTemperature();
-        /**
+  bool updateMeasurements(uint8_t component = ALL);
+  /** @brief Take ONE reading of the MS5803 (pressure and its temperature) and append it to the readings. */
+  bool updatePressure();
+  /** @brief Take ONE reading of the MCP9808 (external temperature) and append it to the readings. */
+  bool updateTemperature();
+  /**
          * @brief Set how many MS5803 readings updateMeasurements() takes
          * (statistics are computed over them). Clamped to WALRUS_PRESSURE_CAPACITY.
          * @return The number actually set.
          */
-        uint16_t setPressureReadings(uint16_t n);
-        /** @brief Set how many MCP9808 readings updateMeasurements() takes. Clamped to WALRUS_TEMPERATURE_CAPACITY. */
-        uint16_t setTemperatureReadings(uint16_t n);
-        /** @brief Enable or disable pressure and MS5803-temperature std and sterr columns in printDataRow()/printDataHeader(). */
-        void setPressureStats(bool enable);
-        /** @brief Enable or disable external-temperature std and sterr columns in printDataRow()/printDataHeader(). */
-        void setTemperatureStats(bool enable);
-        /** @brief Number of valid MS5803 readings stored by the last updateMeasurements(). */
-        uint16_t getPressureCount();
-        /** @brief Number of valid MCP9808 readings stored by the last updateMeasurements(). */
-        uint16_t getTemperatureCount();
-        /**
+  uint16_t setPressureReadings(uint16_t n);
+  /** @brief Set how many MCP9808 readings updateMeasurements() takes. Clamped to WALRUS_TEMPERATURE_CAPACITY. */
+  uint16_t setTemperatureReadings(uint16_t n);
+  /** @brief Enable or disable pressure and MS5803-temperature std and sterr columns in printDataRow()/printDataHeader(). */
+  void setPressureStats(bool enable);
+  /** @brief Enable or disable external-temperature std and sterr columns in printDataRow()/printDataHeader(). */
+  void setTemperatureStats(bool enable);
+  /** @brief Number of valid MS5803 readings stored by the last updateMeasurements(). */
+  uint16_t getPressureCount();
+  /** @brief Number of valid MCP9808 readings stored by the last updateMeasurements(). */
+  uint16_t getTemperatureCount();
+  /**
          * @brief Return calculated temperature from Walrus.
          * @details This calculated temperature can be from either
          * the MS5803 sensor, which primarily measures pressure, or from the
@@ -138,8 +137,8 @@ class Walrus : public NW_Sensor
          * what setTemperatureReadings(), setTemperatureStats() and
          * getTemperatureCount() have always meant.
          */
-        float getTemperature();
-        /**
+  float getTemperature();
+  /**
          * @brief The MS5803's own die temperature [C].
          * @details A diagnostic, not a measurement of the medium: it is what
          * compensates the pressure, and it reads the inside of the pressure
@@ -147,15 +146,15 @@ class Walrus : public NW_Sensor
          * two thermometers apart, which is the chip-naming rule in
          * NW-Device-Specification.
          */
-        float getMS5803Temperature();
-        /**
+  float getMS5803Temperature();
+  /**
          * @brief Return calculated pressure from sensor [mBar].
          * @details This is the MS5803 sensor, which can come in a variety
          * of different pressure ranges and sensitivities. The mean of the
          * readings stored by the last updateMeasurements().
          */
-        float getPressure();
-        /**
+  float getPressure();
+  /**
          * @brief The MS5803's digital pressure value, D1, in its own counts.
          * @details The conversion the compensated pressure was computed from,
          * served whole on every reading. A reading can be checked after the
@@ -165,12 +164,12 @@ class Walrus : public NW_Sensor
          * the counts is not the counts of the mean. Zero before the first
          * reading. Firmware patch 2 and above.
          */
-        uint32_t getPressureADC();
-        /** @brief The MS5803's digital temperature value, D2, in its own counts; see getPressureADC(). */
-        uint32_t getTemperatureADC();
-        /** @brief Include the D1 and D2 columns in printDataRow() and printDataHeader(). Off by default; ignored when the model is unknown, where they are the pressure and temperature columns already. */
-        void setADCColumns(bool enable);
-        /**
+  uint32_t getPressureADC();
+  /** @brief The MS5803's digital temperature value, D2, in its own counts; see getPressureADC(). */
+  uint32_t getTemperatureADC();
+  /** @brief Include the D1 and D2 columns in printDataRow() and printDataHeader(). Off by default; ignored when the model is unknown, where they are the pressure and temperature columns already. */
+  void setADCColumns(bool enable);
+  /**
          * @brief Which MS5803 Page 1 says is fitted: 1, 2, 5, 7, 14 or 30 bar, or 0xFF unprovisioned.
          * @details Read once by begin(). When it names no MS5803 the device
          * cannot convert a reading, so printDataHeader() and printDataRow() carry the
@@ -178,40 +177,40 @@ class Walrus : public NW_Sensor
          * and say so in the header. The data are then still usable and can be
          * converted afterwards, which a sentinel would not allow.
          */
-        uint8_t getMS5803Model();
-        /** @brief True when getMS5803Model() names a part this library knows how to label. */
-        bool modelKnown();
+  uint8_t getMS5803Model();
+  /** @brief True when getMS5803Model() names a part this library knows how to label. */
+  bool modelKnown();
 
-        // --- Statistics getters ---
-        // Computed two-pass in 32-bit float over the readings stored by the last
-        // updateMeasurements() (NW_Readings). Adequate for N up to the array
-        // capacities; at N in the thousands the sum of squared deviations would
-        // want double precision, which the AVR lacks.
-        /** @brief Pressure mean [mBar] over the stored readings (NW_ERROR when none). */
-        float getPressureMean();
-        /** @brief Pressure standard deviation [mBar]. */
-        float getPressureStd();
-        /** @brief Pressure standard error [mBar]. */
-        float getPressureSterr();
-        /** @brief Pressure median [mBar] (mean of the middle pair for even N). */
-        float getPressureMedian();
-        /** @brief Medium temperature mean [C] over the stored readings (NW_ERROR when none). */
-        float getTemperatureMean();
-        /** @brief Medium temperature standard deviation [C]. */
-        float getTemperatureStd();
-        /** @brief Medium temperature standard error [C]. */
-        float getTemperatureSterr();
-        /** @brief Medium temperature median [C]. */
-        float getTemperatureMedian();
-        /** @brief MS5803 die temperature mean [C]. */
-        float getMS5803TemperatureMean();
-        /** @brief MS5803 die temperature standard deviation [C]. */
-        float getMS5803TemperatureStd();
-        /** @brief MS5803 die temperature standard error [C]. */
-        float getMS5803TemperatureSterr();
-        /** @brief MS5803 die temperature median [C]. */
-        float getMS5803TemperatureMedian();
-        /**
+  // --- Statistics getters ---
+  // Computed two-pass in 32-bit float over the readings stored by the last
+  // updateMeasurements() (NW_Readings). Adequate for N up to the array
+  // capacities; at N in the thousands the sum of squared deviations would
+  // want double precision, which the AVR lacks.
+  /** @brief Pressure mean [mBar] over the stored readings (NW_ERROR when none). */
+  float getPressureMean();
+  /** @brief Pressure standard deviation [mBar]. */
+  float getPressureStd();
+  /** @brief Pressure standard error [mBar]. */
+  float getPressureSterr();
+  /** @brief Pressure median [mBar] (mean of the middle pair for even N). */
+  float getPressureMedian();
+  /** @brief Medium temperature mean [C] over the stored readings (NW_ERROR when none). */
+  float getTemperatureMean();
+  /** @brief Medium temperature standard deviation [C]. */
+  float getTemperatureStd();
+  /** @brief Medium temperature standard error [C]. */
+  float getTemperatureSterr();
+  /** @brief Medium temperature median [C]. */
+  float getTemperatureMedian();
+  /** @brief MS5803 die temperature mean [C]. */
+  float getMS5803TemperatureMean();
+  /** @brief MS5803 die temperature standard deviation [C]. */
+  float getMS5803TemperatureStd();
+  /** @brief MS5803 die temperature standard error [C]. */
+  float getMS5803TemperatureSterr();
+  /** @brief MS5803 die temperature median [C]. */
+  float getMS5803TemperatureMedian();
+  /**
          * @brief Return header
          * @warning Call begin() first. The MS5803's two columns depend on
          * whether Page 1 names a part the device can convert for, which
@@ -228,7 +227,7 @@ class Walrus : public NW_Sensor
          * belongs to is recorded in the Walrus appendix of
          * NW-Device-Specification.
          */
-        /**
+  /**
          * @brief Print the summary columns a logger writes: the means, with the
          * statistics columns each chip group has enabled.
          * @details The streaming form of printDataHeader(), and its definition: that
@@ -238,9 +237,9 @@ class Walrus : public NW_Sensor
          * @param out Where to print.
          * @return Bytes printed.
          */
-        size_t printDataHeader(Print& out) override;
+  size_t printDataHeader(Print& out) override;
 
-        /**
+  /**
          * @brief Print one summary row, in printDataHeader()'s column order.
          * @details Takes no reading: it prints what the last updateMeasurements()
          * left, which is what lets a caller write the same row to two sinks
@@ -248,43 +247,43 @@ class Walrus : public NW_Sensor
          * @param out Where to print.
          * @return Bytes printed.
          */
-        size_t printDataRow(Print& out) override;
+  size_t printDataRow(Print& out) override;
 
-        /**
+  /**
          * @brief Come back on the bus after the logger cut the sensor rail to sleep.
          * @details One of the three calls a logger makes on a watched sensor
          * (LIBRARY-DESIGN.md section 14 step 4). It re-runs begin() at the address
          * this sensor was begun with.
          * @return True when the sensor answered and passed begin()'s gates.
          */
-        /// @brief The address this sensor answers at unless the logger says otherwise.
-        uint8_t defaultAddress() const override;
+  /// @brief The address this sensor answers at unless the logger says otherwise.
+  uint8_t defaultAddress() const override;
 
-        bool wake(uint8_t address) override;
+  bool wake(uint8_t address) override;
 
-        /**
+  /**
          * @brief Take this row's readings and store them, for printDataRow() to print.
          * @return True when a reading was taken.
          */
-        bool acquire() override;
+  bool acquire() override;
 
-        /**
+  /**
          * @brief Print one word for the logger's Note column, with no comma.
          * @param beginFailed print why begin() refused, rather than what the last
          *        reading reported.
          * @return Bytes printed.
          */
-        size_t printNote(Print& out, bool beginFailed = false) override;
+  size_t printNote(Print& out, bool beginFailed = false) override;
 
-        /**
+  /**
          * @brief Take a reading (updateMeasurements()) and return it as a string
          * @details String(getPressure()) + "," + String(getTemperature())
          + "," + String(getMS5803Temperature()) + ","; statistics columns as
          * printDataHeader() describes.
          */
 
-        // --- Reading interface (NW standard) ---
-        /**
+  // --- Reading interface (NW standard) ---
+  /**
          * @brief Print the header matching printReading(): column names with
          * units, each followed by a comma, for the chips selected by
          * beginReadings(). No statistics columns: one reading has none.
@@ -295,8 +294,8 @@ class Walrus : public NW_Sensor
          * @param out Any Print destination (SdFat File, Serial, ...).
          * @return Bytes written.
          */
-        size_t printHeader(Print& out);
-        /**
+  size_t printHeader(Print& out);
+  /**
          * @brief Print the stored reading of the selected chips, each value
          * followed by a comma. Does not acquire: call updateMeasurements()
          * first, or use logReading(). Writes pressure then the MS5803's
@@ -305,14 +304,14 @@ class Walrus : public NW_Sensor
          * Page 1 the MS5803's two values are its own conversions instead.
          * @return Bytes written.
          */
-        size_t printReading(Print& out);
-        /**
+  size_t printReading(Print& out);
+  /**
          * @brief Take ONE reading of the selected chips and print it: the
          * one-reading primitive for collecting many readings to a file.
          * @return Bytes written.
          */
-        size_t logReading(Print& out);
-        /**
+  size_t logReading(Print& out);
+  /**
          * @brief Begin a run of readings, selecting which chips they cover.
          * @param component Walrus::ALL, Walrus::MS5803 or Walrus::MCP9808.
          * @param n How many readings the run will take (the number of
@@ -320,77 +319,79 @@ class Walrus : public NW_Sensor
          * advance (readings-requested word). Nothing on Walrus is powered per
          * batch, so the word only satisfies the protocol.
          */
-        void beginReadings(uint8_t component = ALL, uint16_t n = 0);
-        /** @brief End a run of readings. */
-        void endReadings();
-        /**
+  void beginReadings(uint8_t component = ALL, uint16_t n = 0);
+  /** @brief End a run of readings. */
+  void endReadings();
+  /**
         * @brief Checks for updated data. Returns `true` if the device's ready
         * bit is set; otherwise returns `false`.
         * @deprecated Use ready(); the handshake is newReading() after requestReading().
         */
-        bool newData();
+  bool newData();
 
-        // --- Handshake (NW-Device-Specification Block 0) ---
-        /** @brief Status ready bit: the data registers hold a complete reading. */
-        bool ready();
-        /** @brief The reading counter has advanced since the last request. */
-        bool newReading();
-        /** @brief Trigger a reading of both chips without waiting for it. */
-        bool requestReading();
+  // --- Handshake (NW-Device-Specification Block 0) ---
+  /** @brief Status ready bit: the data registers hold a complete reading. */
+  bool ready();
+  /** @brief The reading counter has advanced since the last request. */
+  bool newReading();
+  /** @brief Trigger a reading of both chips without waiting for it. */
+  bool requestReading();
 
-        // --- Faults (status byte, live; Report register, latched) ---
-        /** @brief True if the given chip (0 = MS5803, 1 = MCP9808) was faulted in the last reading. */
-        bool faulted(uint8_t chip);
-        /** @brief True if any chip was faulted in the last reading (status pan-fault bit). */
-        bool anyFault();
-        /** @brief Chip index of the report (0 MS5803, 1 MCP9808, 7 the unit); meaningful when reportKind() != 0. */
-        uint8_t reportChip();
-        /** @brief Kind of the report, per the spec's table (1 not answering, 6 restarted since configured, ...). */
-        uint8_t reportKind();
-        /** @brief Print the report as text, e.g. "MS5803: not answering"; "none" when there is no fault. */
-        size_t printReport(Print& out);
-        /** @brief The report as one word for a note column: "MS5803NotAnswering", "UnitRestarted"; "UnitNone" when none. */
-        /** @brief Print one status line for a logger's status file: name, serial, versions, the last report, Pages 0-2 in hex; no newline, not answering. */
-        size_t printStatus(Print& out, bool boot = false) override;
-        // --- NW_Sensor: the logger's view (Margay::watch) ---
-        const char* name() const override { return "Walrus"; }
-        bool reportIsFault() override;
-        uint8_t bootReportKind() override;
-        void clearBootReport() override;
-        /** @brief Why the last begin() refused, as one word: "NotAnswering", "NotSchema1", "WrongName", "OldFirmware"; "None" after success. */
-        uint8_t getHardwareMajor();
-        uint8_t getHardwareMinor();
-        uint8_t getFirmwareVersion();
-    private:
-        NW_Device _dev;
-        float _pressure = NW_ERROR;   //Mean of the last updateMeasurements() [mBar]
-        float _tempExt = NW_ERROR;    //MCP9808 [C]
-        float _tempMS5803 = NW_ERROR; //MS5803 [C]
-        void clearADC();              //Both conversions back to WALRUS_ADC_NOT_READ
-        uint32_t _pressureAdc = WALRUS_ADC_NOT_READ;    //MS5803 D1, counts, last reading
-        uint32_t _temperatureAdc = WALRUS_ADC_NOT_READ; //MS5803 D2, counts, last reading
-        bool _adcColumns = false;     //the counts are a diagnostic: off unless asked for
-        uint8_t _model = 0xFF;        //Page 1's MS5803 model, read by begin()
-        bool _modelRead = false;      //whether begin() got to ask
-        // Readings as the device serves them (raw register units), one array per
-        // field; statistics come from these and are scaled on the way out.
-        NW_Readings<int32_t, WALRUS_PRESSURE_CAPACITY>    _pressureReadings;   //uBar
-        NW_Readings<int16_t, WALRUS_PRESSURE_CAPACITY>    _tempMS5803Readings; //0.01 C
-        NW_Readings<int16_t, WALRUS_TEMPERATURE_CAPACITY> _tempExtReadings;    //0.01 C
-        NW_ReadingsConfig _pressureCfg;    //Readings per updateMeasurements() and stats columns, MS5803 group
-        NW_ReadingsConfig _temperatureCfg; //MCP9808 group
-        uint8_t _component = ALL;     //Selection of the current beginReadings() run
-        //Append one served MS5803 reading unless faulted. Takes a reference to
-        //an array of exactly WALRUS_DATA_BYTES, not a pointer: it reads Block 3
-        //at offset 16, and a caller that passed a shorter buffer once read past
-        //the end of it. The size is now the compiler's business.
-        bool readMS5803(const uint8_t (&d)[WALRUS_DATA_BYTES]);
-        //Fill a reading's 24 bytes, in two transactions because of the buffer
-        //above. Both are checked against the same captured reading by
-        //NW_Device::readData(), so they cannot straddle a rewrite.
-        bool readPage2(uint8_t (&d)[WALRUS_DATA_BYTES]);
-        bool readMCP9808(uint8_t* d); //Append one served MCP9808 reading (2 bytes from 0x50) unless faulted
-        void summarise(uint8_t component); //Means into the single-value fields, NW_ERROR when no reading
+  // --- Faults (status byte, live; Report register, latched) ---
+  /** @brief True if the given chip (0 = MS5803, 1 = MCP9808) was faulted in the last reading. */
+  bool faulted(uint8_t chip);
+  /** @brief True if any chip was faulted in the last reading (status pan-fault bit). */
+  bool anyFault();
+  /** @brief Chip index of the report (0 MS5803, 1 MCP9808, 7 the unit); meaningful when reportKind() != 0. */
+  uint8_t reportChip();
+  /** @brief Kind of the report, per the spec's table (1 not answering, 6 restarted since configured, ...). */
+  uint8_t reportKind();
+  /** @brief Print the report as text, e.g. "MS5803: not answering"; "none" when there is no fault. */
+  size_t printReport(Print& out);
+  /** @brief The report as one word for a note column: "MS5803NotAnswering", "UnitRestarted"; "UnitNone" when none. */
+  /** @brief Print one status line for a logger's status file: name, serial, versions, the last report, Pages 0-2 in hex; no newline, not answering. */
+  size_t printStatus(Print& out, bool boot = false) override;
+  // --- NW_Sensor: the logger's view (Margay::watch) ---
+  const char* name() const override {
+    return "Walrus";
+  }
+  bool reportIsFault() override;
+  uint8_t bootReportKind() override;
+  void clearBootReport() override;
+  /** @brief Why the last begin() refused, as one word: "NotAnswering", "NotSchema1", "WrongName", "OldFirmware"; "None" after success. */
+  uint8_t getHardwareMajor();
+  uint8_t getHardwareMinor();
+  uint8_t getFirmwareVersion();
+private:
+  NW_Device _dev;
+  float _pressure = NW_ERROR;                      //Mean of the last updateMeasurements() [mBar]
+  float _tempExt = NW_ERROR;                       //MCP9808 [C]
+  float _tempMS5803 = NW_ERROR;                    //MS5803 [C]
+  void clearADC();                                 //Both conversions back to WALRUS_ADC_NOT_READ
+  uint32_t _pressureAdc = WALRUS_ADC_NOT_READ;     //MS5803 D1, counts, last reading
+  uint32_t _temperatureAdc = WALRUS_ADC_NOT_READ;  //MS5803 D2, counts, last reading
+  bool _adcColumns = false;                        //the counts are a diagnostic: off unless asked for
+  uint8_t _model = 0xFF;                           //Page 1's MS5803 model, read by begin()
+  bool _modelRead = false;                         //whether begin() got to ask
+  // Readings as the device serves them (raw register units), one array per
+  // field; statistics come from these and are scaled on the way out.
+  NW_Readings<int32_t, WALRUS_PRESSURE_CAPACITY> _pressureReadings;    //uBar
+  NW_Readings<int16_t, WALRUS_PRESSURE_CAPACITY> _tempMS5803Readings;  //0.01 C
+  NW_Readings<int16_t, WALRUS_TEMPERATURE_CAPACITY> _tempExtReadings;  //0.01 C
+  NW_ReadingsConfig _pressureCfg;                                      //Readings per updateMeasurements() and stats columns, MS5803 group
+  NW_ReadingsConfig _temperatureCfg;                                   //MCP9808 group
+  uint8_t _component = ALL;                                            //Selection of the current beginReadings() run
+  //Append one served MS5803 reading unless faulted. Takes a reference to
+  //an array of exactly WALRUS_DATA_BYTES, not a pointer: it reads Block 3
+  //at offset 16, and a caller that passed a shorter buffer once read past
+  //the end of it. The size is now the compiler's business.
+  bool readMS5803(const uint8_t (&d)[WALRUS_DATA_BYTES]);
+  //Fill a reading's 24 bytes, in two transactions because of the buffer
+  //above. Both are checked against the same captured reading by
+  //NW_Device::readData(), so they cannot straddle a rewrite.
+  bool readPage2(uint8_t (&d)[WALRUS_DATA_BYTES]);
+  bool readMCP9808(uint8_t* d);       //Append one served MCP9808 reading (2 bytes from 0x50) unless faulted
+  void summarise(uint8_t component);  //Means into the single-value fields, NW_ERROR when no reading
 };
 
 /** @deprecated Use Walrus::DEFAULT_ADDRESS. Every NW library defined this same macro
