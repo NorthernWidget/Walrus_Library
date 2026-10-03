@@ -88,7 +88,7 @@ class Walrus : public NW_Sensor
          * address.
          * @details Refuses the device unless Page 0 says Schema 1, the name
          * "Walrus", and a firmware patch of at least WALRUS_FW_MIN_PATCH;
-         * beginFailure() says which gate refused.
+         * printNote(out, true) says which gate refused.
          * @param Address_: I2C address of Walrus
          * @return true if the device answered and passed the three gates
          */
@@ -118,9 +118,9 @@ class Walrus : public NW_Sensor
         uint16_t setPressureReadings(uint16_t n);
         /** @brief Set how many MCP9808 readings updateMeasurements() takes. Clamped to WALRUS_TEMPERATURE_CAPACITY. */
         uint16_t setTemperatureReadings(uint16_t n);
-        /** @brief Enable or disable pressure and MS5803-temperature std and sterr columns in getString()/getHeader(). */
+        /** @brief Enable or disable pressure and MS5803-temperature std and sterr columns in printDataRow()/printDataHeader(). */
         void setPressureStats(bool enable);
-        /** @brief Enable or disable external-temperature std and sterr columns in getString()/getHeader(). */
+        /** @brief Enable or disable external-temperature std and sterr columns in printDataRow()/printDataHeader(). */
         void setTemperatureStats(bool enable);
         /** @brief Number of valid MS5803 readings stored by the last updateMeasurements(). */
         uint16_t getPressureCount();
@@ -168,12 +168,12 @@ class Walrus : public NW_Sensor
         uint32_t getPressureADC();
         /** @brief The MS5803's digital temperature value, D2, in its own counts; see getPressureADC(). */
         uint32_t getTemperatureADC();
-        /** @brief Include the D1 and D2 columns in getString() and getHeader(). Off by default; ignored when the model is unknown, where they are the pressure and temperature columns already. */
+        /** @brief Include the D1 and D2 columns in printDataRow() and printDataHeader(). Off by default; ignored when the model is unknown, where they are the pressure and temperature columns already. */
         void setADCColumns(bool enable);
         /**
          * @brief Which MS5803 Page 1 says is fitted: 1, 2, 5, 7, 14 or 30 bar, or 0xFF unprovisioned.
          * @details Read once by begin(). When it names no MS5803 the device
-         * cannot convert a reading, so getHeader() and getString() carry the
+         * cannot convert a reading, so printDataHeader() and printDataRow() carry the
          * MS5803's own conversions in place of pressure and its temperature,
          * and say so in the header. The data are then still usable and can be
          * converted afterwards, which a sentinel would not allow.
@@ -231,7 +231,7 @@ class Walrus : public NW_Sensor
         /**
          * @brief Print the summary columns a logger writes: the means, with the
          * statistics columns each chip group has enabled.
-         * @details The streaming form of getHeader(), and its definition: that
+         * @details The streaming form of printDataHeader(), and its definition: that
          * function prints through this one into a String. Pass a `File` to write
          * the card, `Serial` to write the monitor. Distinct from printHeader(),
          * which is the burst interface and carries no statistics.
@@ -276,22 +276,19 @@ class Walrus : public NW_Sensor
          */
         size_t printNote(Print& out, bool beginFailed = false) override;
 
-
-        String getHeader();
         /**
          * @brief Take a reading (updateMeasurements()) and return it as a string
          * @details String(getPressure()) + "," + String(getTemperature())
          + "," + String(getMS5803Temperature()) + ","; statistics columns as
-         * getHeader() describes.
+         * printDataHeader() describes.
          */
-        String getString();
 
         // --- Reading interface (NW standard) ---
         /**
          * @brief Print the header matching printReading(): column names with
          * units, each followed by a comma, for the chips selected by
          * beginReadings(). No statistics columns: one reading has none.
-         * These carry the bare standard names rather than getHeader()'s
+         * These carry the bare standard names rather than printDataHeader()'s
          * mean_of_ forms, because each value here is one reading. The two sets
          * differ for that reason and no other: both are generated from the same
          * rows of standard-names.csv.
@@ -353,7 +350,6 @@ class Walrus : public NW_Sensor
         /** @brief Print the report as text, e.g. "MS5803: not answering"; "none" when there is no fault. */
         size_t printReport(Print& out);
         /** @brief The report as one word for a note column: "MS5803NotAnswering", "UnitRestarted"; "UnitNone" when none. */
-        String reportNote();
         /** @brief Print one status line for a logger's status file: name, serial, versions, the last report, Pages 0-2 in hex; no newline, not answering. */
         size_t printStatus(Print& out, bool boot = false) override;
         // --- NW_Sensor: the logger's view (Margay::watch) ---
@@ -362,7 +358,6 @@ class Walrus : public NW_Sensor
         uint8_t bootReportKind() override;
         void clearBootReport() override;
         /** @brief Why the last begin() refused, as one word: "NotAnswering", "NotSchema1", "WrongName", "OldFirmware"; "None" after success. */
-        String beginFailure();
         uint8_t getHardwareMajor();
         uint8_t getHardwareMinor();
         uint8_t getFirmwareVersion();

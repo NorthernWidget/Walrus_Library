@@ -208,7 +208,6 @@ bool    Walrus::faulted(uint8_t chip) { return _dev.faulted(chip); }
 bool    Walrus::anyFault()         { return _dev.anyFault(); }
 uint8_t Walrus::reportChip()        { return _dev.reportChip(); }
 uint8_t Walrus::reportKind()        { return _dev.reportKind(); }
-String  Walrus::beginFailure()     { return _dev.beginFailure(); }
 uint8_t Walrus::getHardwareMajor() { return _dev.hardwareMajor(); }
 uint8_t Walrus::getHardwareMinor() { return _dev.hardwareMinor(); }
 uint8_t Walrus::getFirmwareVersion() { return _dev.firmwareVersion(); }
@@ -230,16 +229,9 @@ bool    Walrus::reportIsFault()   { return _dev.report().isFault(); }
 uint8_t Walrus::bootReportKind()  { return _dev.bootReport().kind(); }
 void    Walrus::clearBootReport() { _dev.clearBootReport(); }
 
-String Walrus::reportNote()
-{
-    //One word for a data-table note: the chip, then the kind ("MS5803NotAnswering").
-    static const char* const chips[] = {"MS5803", "MCP9808"};
-    return _dev.report().note(chips, 2);
-}
 
-//The summary interface: the columns a logger writes, streamed. getHeader() and
-//getString() are the same column set collected into a String, which keeps one
-//definition of it. See LIBRARY-DESIGN.md section 14.
+//The summary interface: the columns a logger writes, streamed straight into
+//the open file. See LIBRARY-DESIGN.md section 14.
 size_t Walrus::printDataHeader(Print& out)
 {
     //The summary row: every value is a mean over the readings taken, which is
@@ -321,22 +313,7 @@ size_t Walrus::printDataRow(Print& out)
     return n;
 }
 
-String Walrus::getHeader()
-{
-    String h;
-    NW_StringPrint p(h);
-    printDataHeader(p);
-    return h;
-}
 
-String Walrus::getString()
-{
-    updateMeasurements();                           //NW_ERROR (-9999) where a reading failed
-    String s;
-    NW_StringPrint p(s);
-    printDataRow(p);
-    return s;
-}
 
 //The reading interface: one reading per logReading(), printed as it is taken.
 void Walrus::beginReadings(uint8_t component, uint16_t n)
@@ -358,11 +335,11 @@ void Walrus::endReadings()
 
 size_t Walrus::printHeader(Print& out)
 {
-    //The columns printReading() writes, in the order getHeader() and the
+    //The columns printReading() writes, in the order printDataHeader() and the
     //specification's binding table give: pressure, the medium's temperature,
     //then the MS5803's own. No statistics columns, because one reading has
     //none. With no model on Page 1 the MS5803's two columns carry its
-    //conversions instead, exactly as they do in getHeader().
+    //conversions instead, exactly as they do in printDataHeader().
     size_t n = 0;
     if(_component & MS5803) {
         n += out.print(modelKnown() ? F(HDR_PRESSURE) : F(HDR_D1));
@@ -436,5 +413,9 @@ bool Walrus::acquire()
 
 size_t Walrus::printNote(Print& out, bool beginFailed)
 {
-    return out.print(beginFailed ? beginFailure() : reportNote());
+    //One word for a data-table note: the chip, then the kind ("MS5803NotAnswering"),
+    //or which gate begin() refused at. Streamed, so no String is built for it.
+    static const char* const chips[] = {"MS5803", "MCP9808"};
+    if(beginFailed) return _dev.printBeginFailure(out);
+    return _dev.report().printNote(out, chips, 2);
 }

@@ -26,15 +26,19 @@ void setup()
 	Serial.print("Begin Walrus Demo...\n\n"); 
 	if(!Sensor.begin()) { //Initialize sensor; say why if it refuses
 		Serial.print("Walrus not found: ");
-		Serial.println(Sensor.beginFailure());
+		Sensor.printNote(Serial, true);
+		Serial.println();
 	}
-	Serial.println(Sensor.getHeader()); //Print header from Walrus to identify values
+	Sensor.printDataHeader(Serial); //Print header from Walrus to identify values
+	Serial.println();
 }
 
 void loop()
 {
 	static unsigned long LocalTime = millis(); //Initialize local time keeping
 	if((millis() - LocalTime) > UpdatePeriod) { //If a period has passed, print new values
-		Serial.println(Sensor.getString()); //Grab pre-compiled string from sensor and print
+		Sensor.updateMeasurements(); //Take the readings
+		Sensor.printDataRow(Serial); //Print them straight to the port
+		Serial.println();
 	}
 }

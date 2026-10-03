@@ -1,5 +1,5 @@
 // Output-regression test for Walrus_Library: compiles src/Walrus_I2C.cpp
-// against the NW_Core stubs and prints getHeader()/getString()/getters for
+// against the NW_Core stubs and prints printDataHeader()/printDataRow()/getters for
 // fixed register images. run.sh diffs the result against baseline.txt.
 #include "Arduino.h"
 #include "Wire.h"
@@ -24,10 +24,47 @@ static void loadImage(int32_t pressure, int16_t tMS5803, int16_t tExt, uint8_t f
   r[0x20] = ms5803Model;                                             // Page 1: which MS5803 is fitted
 }
 
+// The four String functions are gone (section 15 family B). These helpers hold
+// this harness's output identical by replicating exactly what they did: a row
+// acquired first, as getString() did, and a header that does not.
+// 1024 because a nine-column header of CSDMS standard names runs past 600
+// characters. Each helper refuses to hide a truncation: a buffer outgrown here
+// would otherwise print a short line and pass.
+static const char* head(Walrus& s) {
+  static char b[1024];
+  NW_BufferPrint p(b, sizeof b);
+  s.printDataHeader(p);
+  if (p.truncated()) printf("  TRUNCATED: head() needs a bigger buffer\n");
+  return b;
+}
+
+static const char* row(Walrus& s) {
+  s.updateMeasurements();            // getString() acquired; printDataRow() does not
+  static char b[1024];
+  NW_BufferPrint p(b, sizeof b);
+  s.printDataRow(p);
+  if (p.truncated()) printf("  TRUNCATED: row() needs a bigger buffer\n");
+  return b;
+}
+
+static const char* note(Walrus& s, bool beginFailed = false) {
+  // Two buffers in rotation: one printf takes both a report word and a begin
+  // failure, and a single static would have the second overwrite the first
+  // before either is printed.
+  static char buffers[2][64];
+  static uint8_t which = 0;
+  char* b = buffers[which];
+  which = (uint8_t)(1 - which);
+  NW_BufferPrint p(b, sizeof buffers[0]);
+  s.printNote(p, beginFailed);
+  if (p.truncated()) printf("  TRUNCATED: note() needs a bigger buffer\n");
+  return b;
+}
+
 static void report(const char* name, Walrus& s) {
   printf("[%s]\n", name);
-  printf("header: %s\n", s.getHeader().c_str());
-  printf("string: %s\n", s.getString().c_str());
+  printf("header: %s\n", head(s));
+  printf("string: %s\n", row(s));
   printf("getters: pressure=%.4f tExt=%.4f tMS5803=%.4f default=%.4f newData=%d\n",
          s.getPressure(), s.getTemperature(), s.getMS5803Temperature(), s.getTemperature(), s.newData());
 }
@@ -61,15 +98,15 @@ int main() {
   {
       Walrus s; s.begin(); s.updateMeasurements();
       printf("[adc] D1=%lu D2=%lu\n", (unsigned long)s.getPressureADC(), (unsigned long)s.getTemperatureADC());
-      String head = s.getHeader(), line = s.getString();
-      printf("[adc] default header: %s\n", head.c_str());
+      const char* h = head(s); const char* line = row(s);
+      printf("[adc] default header: %s\n", h);
       s.setADCColumns(true);
-      head = s.getHeader(); line = s.getString();
-      printf("[adc] with columns:   %s\n", head.c_str());
-      printf("[adc] with values:    %s\n", line.c_str());
+      h = head(s); line = row(s);
+      printf("[adc] with columns:   %s\n", h);
+      printf("[adc] with values:    %s\n", line);
       int hc = 0, sc = 0;
-      for (const char* q = head.c_str(); *q; q++) if (*q == ',') hc++;
-      for (const char* q = line.c_str(); *q; q++) if (*q == ',') sc++;
+      for (const char* q = h; *q; q++) if (*q == ',') hc++;
+      for (const char* q = line; *q; q++) if (*q == ',') sc++;
       printf("[adc] %d labels, %d values%s\n", hc, sc, hc == sc ? "" : "  MISMATCH");
   }
 
@@ -80,8 +117,8 @@ int main() {
   {
       Walrus s; s.begin();
       printf("[no model] model=0x%02X known=%d\n", s.getMS5803Model(), s.modelKnown());
-      printf("[no model] header: %s\n", s.getHeader().c_str());
-      printf("[no model] string: %s\n", s.getString().c_str());
+      printf("[no model] header: %s\n", head(s));
+      printf("[no model] string: %s\n", row(s));
       // The per-reading interface must say the same thing as the summary one.
       char pb[256];
       s.beginReadings(Walrus::ALL, 2);
@@ -96,13 +133,13 @@ int main() {
 
   // 5. begin() gates: wrong name, wrong schema, firmware too old, and the versions it reports.
   loadImage(1013250, 2137, 405); Wire.image[0x01] = 'X';
-  { Walrus s; bool ok = s.begin(); printf("[wrong name] begin=%d failure=%s\n", ok, s.beginFailure().c_str()); }
+  { Walrus s; bool ok = s.begin(); printf("[wrong name] begin=%d failure=%s\n", ok, note(s, true)); }
   loadImage(1013250, 2137, 405, 1, 0x00);
-  { Walrus s; bool ok = s.begin(); printf("[schema 0x00] begin=%d failure=%s\n", ok, s.beginFailure().c_str()); }
+  { Walrus s; bool ok = s.begin(); printf("[schema 0x00] begin=%d failure=%s\n", ok, note(s, true)); }
   loadImage(1013250, 2137, 405, 0);
-  { Walrus s; bool ok = s.begin(); printf("[fw patch 0 < min %d] begin=%d fw=%u failure=%s\n", WALRUS_FW_MIN_PATCH, ok, s.getFirmwareVersion(), s.beginFailure().c_str()); }
+  { Walrus s; bool ok = s.begin(); printf("[fw patch 0 < min %d] begin=%d fw=%u failure=%s\n", WALRUS_FW_MIN_PATCH, ok, s.getFirmwareVersion(), note(s, true)); }
   loadImage(1013250, 2137, 405);
-  { Walrus s; bool ok = s.begin(); printf("[versions] begin=%d hw=%u.%u fw=%u failure=%s\n", ok, s.getHardwareMajor(), s.getHardwareMinor(), s.getFirmwareVersion(), s.beginFailure().c_str()); }
+  { Walrus s; bool ok = s.begin(); printf("[versions] begin=%d hw=%u.%u fw=%u failure=%s\n", ok, s.getHardwareMajor(), s.getHardwareMinor(), s.getFirmwareVersion(), note(s, true)); }
 
   // 6. Faults: the MS5803 does not acknowledge (status bit 1, pan-fault, latched 0x01);
   //    the MCP9808 value survives. Then a unit reset code with a clean status.
@@ -120,14 +157,14 @@ int main() {
     onReading = [](TwoWire& w) { w.image[0x40] = 0x83; w.image[0x47] = 0x01; };
     bool ok = s.updateMeasurements(); BufferPrint bp(pb, sizeof pb); s.printReport(bp);
     printf("[MS5803 no ack] update=%d faulted(0)=%d faulted(1)=%d any=%d chip=%u kind=%u text='%s' note='%s'\n",
-           ok, s.faulted(0), s.faulted(1), s.anyFault(), s.reportChip(), s.reportKind(), pb, s.reportNote().c_str());
-    printf("[MS5803 no ack] string: %s\n", s.getString().c_str());
+           ok, s.faulted(0), s.faulted(1), s.anyFault(), s.reportChip(), s.reportKind(), pb, note(s));
+    printf("[MS5803 no ack] string: %s\n", row(s));
     printf("[MS5803 no ack] D1=%lu D2=%lu notRead=%d\n",
            (unsigned long)s.getPressureADC(), (unsigned long)s.getTemperatureADC(),
            s.getPressureADC() == WALRUS_ADC_NOT_READ && s.getTemperatureADC() == WALRUS_ADC_NOT_READ);
     onReading = [](TwoWire& w) { w.image[0x40] = 0x01; w.image[0x47] = 0xE6; };
     ok = s.updateMeasurements(); BufferPrint bp2(pb, sizeof pb); s.printReport(bp2);
-    printf("[unit reset] update=%d any=%d chip=%u kind=%u text='%s' note='%s'\n", ok, s.anyFault(), s.reportChip(), s.reportKind(), pb, s.reportNote().c_str());
+    printf("[unit reset] update=%d any=%d chip=%u kind=%u text='%s' note='%s'\n", ok, s.anyFault(), s.reportChip(), s.reportKind(), pb, note(s));
     onReading = nullptr; }
 
   // 7. Handshake pieces and the cost of one row.
@@ -135,10 +172,10 @@ int main() {
   { Walrus s; s.begin(); unsigned t0 = Wire.transactions;
     bool req = s.requestReading(); bool nr = s.newReading(); bool rd = s.ready();
     printf("[handshake] requestReading=%d newReading=%d ready=%d\n", req, nr, rd);
-    s.getString(); printf("[cost] requestFrom calls for one getString(): %u\n", Wire.transactions - t0 - 2); }
+    row(s); printf("[cost] requestFrom calls for one row: %u\n", Wire.transactions - t0 - 2); }
 
   // 8. N readings with statistics: pressure steps through five values, the MCP9808
-  //    through three; the batch word reaches the device; getString() grows its columns.
+  //    through three; the batch word reaches the device; the row grows its columns.
   loadImage(1013250, 2137, 405);
   { Walrus s; s.begin(); int k = 0;
     onReading = [&](TwoWire& w) { k++;
@@ -153,8 +190,8 @@ int main() {
     printf("[N=5,3] pressure mean=%.4f std=%.4f sterr=%.4f median=%.4f | tExt mean=%.4f std=%.4f median=%.4f | tMS5803 mean=%.4f std=%.4f\n",
            s.getPressureMean(), s.getPressureStd(), s.getPressureSterr(), s.getPressureMedian(),
            s.getTemperatureMean(), s.getTemperatureStd(), s.getTemperatureMedian(), s.getMS5803TemperatureMean(), s.getMS5803TemperatureStd());
-    printf("[N=5,3] header: %s\n", s.getHeader().c_str());
-    printf("[N=5,3] string: %s\n", s.getString().c_str());
+    printf("[N=5,3] header: %s\n", head(s));
+    printf("[N=5,3] string: %s\n", row(s));
     // One chip group only: the MCP9808 readings are left untouched by an MS5803 update.
     ok = s.updateMeasurements(Walrus::MS5803);
     printf("[MS5803 only] update=%d pressureCount=%u temperatureCount=%u tExt=%.4f\n", ok, s.getPressureCount(), s.getTemperatureCount(), s.getTemperature());
@@ -188,7 +225,7 @@ int main() {
   { Walrus s; s.begin(); int k = 0;
     onReading = [&](TwoWire& w) { k++; w.image[0x40] = 0x83; w.image[0x47] = 0x01; };
     s.setPressureReadings(10); bool ok = s.updateMeasurements(Walrus::MS5803);
-    printf("[dead MS5803] N=10: update=%d readings taken=%d pressureCount=%u pressure=%.2f note='%s'\n", ok, k, s.getPressureCount(), s.getPressure(), s.reportNote().c_str());
+    printf("[dead MS5803] N=10: update=%d readings taken=%d pressureCount=%u pressure=%.2f note='%s'\n", ok, k, s.getPressureCount(), s.getPressure(), note(s));
     onReading = nullptr; }
 
   // The status line for a logger's status file.
